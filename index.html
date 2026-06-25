@@ -2719,7 +2719,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if(!gn.length){ try{ gn = JSON.parse(localStorage.getItem('weddingGuests')||'[]')||[]; }catch(e){ gn=[]; } }
       if(!gn.length){ status.style.color='#9A7B3F'; status.textContent='Имя не указано. Обновите страницу и представьтесь 🙏'; return; }
       var name = gn[0];
-      if(typeof window.html2canvas==='undefined' || !window.jspdf){
+      if(!window.jspdf){
         status.style.color='#b5524a'; status.textContent='Нет соединения для генерации PDF. Проверьте интернет.'; return;
       }
       status.style.color='#9A7B3F'; status.textContent='Готовим ваше приглашение… ✨';
@@ -2765,12 +2765,42 @@ document.addEventListener('DOMContentLoaded', function() {
         '<div class="pc-foot">Будем счастливы разделить этот день с вами🤍</div>'+
         '</div>'+
         '</div>';
-      document.body.appendChild(card);
       try{
-        try{ await Promise.race([ (document.fonts && document.fonts.ready) || Promise.resolve(), new Promise(function(r){ setTimeout(r, 2500); }) ]); }catch(_f){}
-        var pdfScale=(window.innerWidth<768||/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent))?1:2;
-        var canvas=await Promise.race([ window.html2canvas(card,{scale:pdfScale,backgroundColor:'#F7F3EA',useCORS:true,logging:false,removeContainer:true,imageTimeout:8000}), new Promise(function(_r,rej){ setTimeout(function(){ rej(new Error('Не удалось отрисовать за 25с — попробуйте ещё раз')); }, 25000); }) ]);
-        var img=canvas.toDataURL('image/jpeg',0.9);
+        var W=1240, H=1754;
+        var __cnv=document.createElement('canvas'); __cnv.width=W; __cnv.height=H;
+        var g=__cnv.getContext('2d');
+        g.fillStyle='#F7F3EA'; g.fillRect(0,0,W,H);
+        g.strokeStyle='#9A7B3F'; g.lineWidth=3; g.strokeRect(46,46,W-92,H-92);
+        g.strokeStyle='#C2A368'; g.lineWidth=1.5; g.strokeRect(60,60,W-120,H-120);
+        var cx=W/2;
+        g.textAlign='center'; g.textBaseline='alphabetic';
+        function divline(y){ g.strokeStyle='#C2A368'; g.lineWidth=1; g.beginPath(); g.moveTo(cx-150,y); g.lineTo(cx-26,y); g.moveTo(cx+26,y); g.lineTo(cx+150,y); g.stroke(); g.fillStyle='#9A7B3F'; g.font='26px Georgia, serif'; g.fillText('❦', cx, y+9); }
+        g.fillStyle='#C2A368'; g.font='42px Georgia, serif';
+        g.fillText('❧', 105, 118); g.fillText('❧', W-105, 118); g.fillText('❧', 105, H-78); g.fillText('❧', W-105, H-78);
+        function wrap(text, y, font, color, maxW, lh){ g.font=font; g.fillStyle=color; var words=text.split(' '); var ls=''; var arr=[]; for(var i=0;i<words.length;i++){ var t=ls?ls+' '+words[i]:words[i]; if(g.measureText(t).width>maxW && ls){ arr.push(ls); ls=words[i]; } else ls=t; } if(ls) arr.push(ls); for(var j=0;j<arr.length;j++){ g.fillText(arr[j], cx, y+j*lh); } return y+arr.length*lh; }
+        divline(150);
+        g.fillStyle='#9A7B3F'; g.font='40px Georgia, serif'; g.fillText('08 · 08 · 2026', cx, 232);
+        g.fillStyle='#3C5169'; g.font='italic 46px Georgia, serif'; g.fillText(dear+' '+displayName+'!', cx, 322);
+        var y=wrap('Мы рады пригласить тебя разделить с нами один из самых важных дней нашей жизни — день, когда мы соединим свои сердца и судьбы.', 392, '28px Georgia, serif', '#34465A', W-320, 44);
+        g.fillStyle='#3C5169'; g.font='italic 62px Georgia, serif'; g.fillText('Дмитрий & Екатерина', cx, y+74);
+        g.fillStyle='#5E7081'; g.font='italic 27px Georgia, serif'; g.fillText('приглашают вас на свадьбу', cx, y+118);
+        var yy=y+185; divline(yy-32);
+        g.fillStyle='#9A7B3F'; g.font='34px Georgia, serif'; g.fillText('Программа дня', cx, yy+12); yy+=56;
+        var prog=[['15:30','Сбор гостей'],['16:00','Торжественная церемония'],['17:00','Праздничный банкет'],['21:00','Завершение вечера']];
+        g.font='26px Georgia, serif';
+        for(var p=0;p<prog.length;p++){ g.textAlign='right'; g.fillStyle='#3C5169'; g.fillText(prog[p][0], cx-24, yy); g.textAlign='left'; g.fillStyle='#34465A'; g.fillText(prog[p][1], cx+24, yy); yy+=46; }
+        g.textAlign='center'; yy+=18; divline(yy-32);
+        g.fillStyle='#9A7B3F'; g.font='34px Georgia, serif'; g.fillText('Место проведения', cx, yy+12); yy+=58;
+        g.fillStyle='#3C5169'; g.font='italic 34px Georgia, serif'; g.fillText('Ресторан «Ферма»', cx, yy); yy+=44;
+        g.fillStyle='#5E7081'; g.font='24px Georgia, serif'; g.fillText('г. Серпухов, Тульская ул., 1 к1', cx, yy); yy+=64;
+        divline(yy-32);
+        g.fillStyle='#9A7B3F'; g.font='34px Georgia, serif'; g.fillText('Цветовая гамма', cx, yy+12); yy+=78;
+        var pal=[['#3C5169','Нептун'],['#8FA9C4','Пыльно-голубой'],['#7E957D','Шалфей'],['#CFCFC4','Серый'],['#C2A368','Золото']];
+        var nP=pal.length, gp=152, sx=cx-(nP-1)*gp/2, rad=34;
+        for(var k=0;k<nP;k++){ var pxx=sx+k*gp; g.beginPath(); g.arc(pxx,yy,rad,0,Math.PI*2); g.fillStyle=pal[k][0]; g.fill(); g.lineWidth=3; g.strokeStyle='#ffffff'; g.stroke(); g.fillStyle='#5E7081'; g.font='italic 17px Georgia, serif'; g.fillText(pal[k][1], pxx, yy+rad+26); }
+        yy+=rad+72; divline(yy);
+        g.fillStyle='#9A7B3F'; g.font='italic 30px Georgia, serif'; g.fillText('С любовью ждём вас!', cx, yy+52);
+        var img=__cnv.toDataURL('image/jpeg',0.92);
         var jsPDF=window.jspdf.jsPDF;
         var pdf=new jsPDF('p','pt','a4');
         var pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
