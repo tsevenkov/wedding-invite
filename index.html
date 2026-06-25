@@ -2325,10 +2325,27 @@ document.addEventListener('DOMContentLoaded', function() {
           throw new Error(result.description || 'Ошибка отправки');
         }
       } catch (error) {
-        console.error('Error:', error);
-        messageBox.className = 'form-message error';
-        messageBox.innerHTML = '✗ Ошибка при отправке. Пожалуйста, свяжитесь с нами напрямую.';
-        messageBox.style.display = 'block';
+        console.error('Telegram error:', error);
+        try {
+          var plain = text.replace(/<br\s*\/?>(?=)/gi, '\n').replace(/<[^>]+>/g, '');
+          var fsResp = await fetch('https://formsubmit.co/ajax/dmitry.tsevenkov.teamlead@gmail.com', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ _subject: 'Анкета со свадебного сайта 💍', _template: 'box', 'Анкета': plain })
+          });
+          var fsResult = await fsResp.json();
+          if (fsResult.success === 'true' || fsResult.success === true) {
+            messageBox.className = 'form-message success';
+            messageBox.innerHTML = '✓ Спасибо! Ваш ответ отправлен. Мы с нетерпением ждём встречи! 💚';
+            messageBox.style.display = 'block';
+            form.reset();
+          } else { throw new Error('FormSubmit failed'); }
+        } catch (e2) {
+          console.error('Email fallback error:', e2);
+          messageBox.className = 'form-message error';
+          messageBox.innerHTML = '✗ Ошибка при отправке. Пожалуйста, свяжитесь с нами напрямую.';
+          messageBox.style.display = 'block';
+        }
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Отправить ответ';
