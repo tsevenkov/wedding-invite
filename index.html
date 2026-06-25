@@ -2277,13 +2277,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
       
-      const text = `💌 <b>НОВАЯ АНКЕТА ГОСТЯ</b>\n\n` +
-        `👤 <b>Имя:</b> ${data.name || '—'}\n` +
-        `👥 <b>За двоих:</b> ${data.forTwo || 'Только за себя'}\n` +
-        (data.name2 ? `🧑‍🤝‍🧑 <b>Второй гость:</b> ${data.name2}\n` : '') +
-        `✨ <b>Присутствие:</b> ${data.attendance || '—'}\n` +
-        `💬 <b>Комментарий:</b> ${data.comment || '—'}\n\n` +
-        `📅 ${new Date().toLocaleString('ru-RU')}`;
+      const fields = {
+        '_subject': '💍 Новая анкета со свадебного сайта',
+        '_template': 'table',
+        '_captcha': 'false',
+        'Имя': data.name || '—',
+        'Заполняет за двоих': data.forTwo || 'Только за себя',
+        'Второй гость': data.name2 || '—',
+        'Присутствие': data.attendance || '—',
+        'Комментарий': data.comment || '—',
+        'Дата заполнения': new Date().toLocaleString('ru-RU')
+      };
       
       submitBtn.disabled = true;
       submitBtn.textContent = 'Отправка...';
@@ -2291,61 +2295,25 @@ document.addEventListener('DOMContentLoaded', function() {
       messageBox.style.display = 'none';
       
       try {
-        if (TELEGRAM_CONFIG.botToken === 'YOUR_BOT_TOKEN_HERE' || 
-            TELEGRAM_CONFIG.chatId === 'YOUR_CHAT_ID_HERE') {
-          await new Promise(r => setTimeout(r, 1000));
-          messageBox.className = 'form-message success';
-          messageBox.innerHTML = '✓ Спасибо! Ваш ответ получен. <br><small style="opacity:0.7">Демо-режим: для отправки в Telegram настройте бота в коде.</small>';
-          messageBox.style.display = 'block';
-          form.reset();
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Отправить ответ';
-          return;
-        }
-        
-        const url = `https://api.telegram.org/bot${TELEGRAM_CONFIG.botToken}/sendMessage`;
-        const response = await fetch(url, {
+        const resp = await fetch('https://formsubmit.co/ajax/dmitry.tsevenkov.teamlead@gmail.com', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: TELEGRAM_CONFIG.chatId,
-            text: text,
-            parse_mode: 'HTML'
-          })
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(fields)
         });
-        
-        const result = await response.json();
-        
-        if (result.ok) {
+        const result = await resp.json();
+        if (result.success === 'true' || result.success === true) {
           messageBox.className = 'form-message success';
           messageBox.innerHTML = '✓ Спасибо! Ваш ответ отправлен. Мы с нетерпением ждём встречи! 💚';
           messageBox.style.display = 'block';
           form.reset();
         } else {
-          throw new Error(result.description || 'Ошибка отправки');
+          throw new Error('Submit failed');
         }
       } catch (error) {
-        console.error('Telegram error:', error);
-        try {
-          var plain = text.replace(/<br\s*\/?>(?=)/gi, '\n').replace(/<[^>]+>/g, '');
-          var fsResp = await fetch('https://formsubmit.co/ajax/dmitry.tsevenkov.teamlead@gmail.com', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ _subject: 'Анкета со свадебного сайта 💍', _template: 'box', 'Анкета': plain })
-          });
-          var fsResult = await fsResp.json();
-          if (fsResult.success === 'true' || fsResult.success === true) {
-            messageBox.className = 'form-message success';
-            messageBox.innerHTML = '✓ Спасибо! Ваш ответ отправлен. Мы с нетерпением ждём встречи! 💚';
-            messageBox.style.display = 'block';
-            form.reset();
-          } else { throw new Error('FormSubmit failed'); }
-        } catch (e2) {
-          console.error('Email fallback error:', e2);
-          messageBox.className = 'form-message error';
-          messageBox.innerHTML = '✗ Ошибка при отправке. Пожалуйста, свяжитесь с нами напрямую.';
-          messageBox.style.display = 'block';
-        }
+        console.error('Email error:', error);
+        messageBox.className = 'form-message error';
+        messageBox.innerHTML = '✗ Ошибка при отправке. Пожалуйста, свяжитесь с нами напрямую.';
+        messageBox.style.display = 'block';
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Отправить ответ';
