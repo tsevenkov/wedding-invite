@@ -2730,11 +2730,11 @@ document.addEventListener('DOMContentLoaded', function() {
         await (document.fonts && document.fonts.ready);
         var pdfScale=(window.innerWidth<768||/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent))?1:2;
         var canvas=await window.html2canvas(card,{scale:pdfScale,backgroundColor:'#F7F3EA',useCORS:true,logging:false,removeContainer:true});
-        var img=canvas.toDataURL('image/png');
+        var img=canvas.toDataURL('image/jpeg',0.9);
         var jsPDF=window.jspdf.jsPDF;
         var pdf=new jsPDF('p','pt','a4');
         var pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
-        pdf.addImage(img,'PNG',0,0,pw,ph);
+        pdf.addImage(img,'JPEG',0,0,pw,ph,undefined,'FAST');
         pdf.save('Приглашение - '+displayName+'.pdf');
         status.style.color='#7E957D'; status.textContent='Готово! Приглашение для «'+displayName+'» скачано 💌';
       }catch(err){
