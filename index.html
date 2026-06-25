@@ -2773,11 +2773,12 @@ document.addEventListener('DOMContentLoaded', function() {
         pdf.addImage(img,'JPEG',0,0,pw,ph,undefined,'FAST');
         if (__isIOS) {
           var blob = pdf.output('blob');
-          var blobUrl = URL.createObjectURL(blob);
           if (__iosWin && !__iosWin.closed) {
-            __iosWin.location.href = blobUrl;
+            var childURL = __iosWin.URL || __iosWin.webkitURL;
+            var u = childURL ? childURL.createObjectURL(blob) : URL.createObjectURL(blob);
+            __iosWin.location.href = u;
           } else {
-            var a = document.createElement('a'); a.href = blobUrl; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            window.location.href = URL.createObjectURL(blob);
           }
         } else {
           pdf.save('Приглашение - '+displayName+'.pdf');
