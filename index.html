@@ -1077,7 +1077,9 @@ footer .heart { color: var(--gold-light); }
 .contact-card .cc-sub{font-family:Georgia,serif;font-style:italic;color:var(--text-light,#5E7081);font-size:15px;}
 @media (max-width:480px){.contact-card{padding:28px 18px;}.contact-card .cc-phone{font-size:23px;padding:8px 16px;}}}
 
-</style>
+
+    .radio-group.attn-error{border:2px solid #e53e3e;border-radius:14px;padding:14px;box-shadow:0 0 0 4px rgba(229,62,62,.12);transition:box-shadow .2s,border-color .2s;}
+  </style>
 
 <style id="enhance-styles">
 /* ===== Scroll progress bar ===== */
@@ -2102,7 +2104,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         <label class="form-label">Подтвердите присутствие</label>
         <div class="radio-group">
           <div class="radio-option">
-            <input type="radio" id="attend-yes" name="attendance" value="Приду" required>
+            <input type="radio" id="attend-yes" name="attendance" value="Приду">
             <label for="attend-yes" id="label-yes">✨ С радостью приду</label>
           </div>
           <div class="radio-option">
@@ -2329,6 +2331,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if(hidden) hidden.value=sel.join(', ');
     }
     document.querySelectorAll('.alc-chip').forEach(function(c){ c.addEventListener('click', function(){ c.classList.toggle('active'); sync(); }); });
+  document.querySelectorAll('input[name="attendance"]').forEach(function(r){ r.addEventListener('change', function(){ var g=document.querySelector('.radio-group'); if(g){ g.style.border=''; g.style.borderRadius=''; g.style.padding=''; g.style.boxShadow=''; } }); });
     if(custom) custom.addEventListener('input', sync);
   })();
 
@@ -2354,12 +2357,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // ===== Обязательное поле: подтверждение присутствия =====
       if (!data.attendance) {
-        messageBox.className = 'form-message error';
-        messageBox.style.display = 'block';
-        messageBox.textContent = '⚠️ Пожалуйста, подтвердите присутствие — выберите один из вариантов.';
-        try { messageBox.scrollIntoView({behavior:'smooth', block:'center'}); } catch(_e){ try{ messageBox.scrollIntoView(); }catch(__e){} }
+        messageBox.style.display = 'none';
         var att = document.querySelector('.radio-group');
-        if (att) { att.classList.remove('attn-shake'); void att.offsetWidth; att.classList.add('attn-shake'); setTimeout(function(){ att.classList.remove('attn-shake'); }, 1400); }
+        if (att) {
+          att.style.border = '2px solid #e53e3e';
+          att.style.borderRadius = '14px';
+          att.style.padding = '14px';
+          att.style.boxShadow = '0 0 0 4px rgba(229,62,62,.12)';
+          try{ att.scrollIntoView({behavior:'smooth', block:'center'}); }catch(_e){}
+        }
         return;
       }
 
