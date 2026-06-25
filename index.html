@@ -2905,7 +2905,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // обручальные кольца (свадебный узор)
         (function(rcy){ var r=17; g.lineWidth=2.6; g.strokeStyle=GOLD2; g.beginPath(); g.arc(cx-r*0.62, rcy, r, 0, Math.PI*2); g.stroke(); g.strokeStyle=GOLD; g.beginPath(); g.arc(cx+r*0.62, rcy, r, 0, Math.PI*2); g.stroke(); })(y+198);
         var yy=y+252; flourish(yy-30);
-        g.fillStyle=GOLD; g.font='30px Georgia, serif'; g.fillText('ПРОГРАММА   ДНЯ', cx, yy+8); yy+=54;
+        g.fillStyle=GOLD; g.font='30px Georgia, serif'; g.fillText('ПРОГРАММА   ДНЯ', cx, yy+8); yy+=60;
         var prog=[['15:30','Сбор гостей'],['16:00','Торжественная церемония'],['17:00','Праздничный банкет']];
         g.font='25px Georgia, serif';
         for(var p=0;p<prog.length;p++){
@@ -2917,20 +2917,20 @@ document.addEventListener('DOMContentLoaded', function() {
           g.fillStyle=GOLD2; g.font='italic 25px Georgia, serif'; g.fillText(sep, startX+wt, yy);
           g.fillStyle=INK; g.font='25px Georgia, serif'; g.fillText(nm, startX+wt+ws, yy);
           g.textAlign='center';
-          yy+=42;
+          yy+=48;
         }
-        yy+=14; flourish(yy-28);
-        g.fillStyle=GOLD; g.font='30px Georgia, serif'; g.fillText('МЕСТО   ПРОВЕДЕНИЯ', cx, yy+8); yy+=50;
-        g.fillStyle=NEPT; g.font='italic 33px Georgia, serif'; g.fillText('Ресторан «Ферма»', cx, yy); yy+=40;
-        g.fillStyle=SOFT; g.font='22px Georgia, serif'; g.fillText('г. Серпухов, Тульская ул., 1 к1', cx, yy); yy+=54;
+        yy+=22; flourish(yy-28);
+        g.fillStyle=GOLD; g.font='30px Georgia, serif'; g.fillText('МЕСТО   ПРОВЕДЕНИЯ', cx, yy+8); yy+=56;
+        g.fillStyle=NEPT; g.font='italic 33px Georgia, serif'; g.fillText('Ресторан «Ферма»', cx, yy); yy+=46;
+        g.fillStyle=SOFT; g.font='22px Georgia, serif'; g.fillText('г. Серпухов, Тульская ул., 1 к1', cx, yy); yy+=60;
         flourish(yy-26);
         g.fillStyle=GOLD; g.font='30px Georgia, serif'; g.fillText('ЦВЕТОВАЯ   ГАММА', cx, yy+8); yy+=66;
         var pal=[['#3C5169','Нептун'],['#8FA9C4','Голубой'],['#7E957D','Шалфей'],['#CFCFC4','Серый'],['#C2A368','Золото']];
         var nP=pal.length, gp=148, sx=cx-(nP-1)*gp/2, rad=31;
         for(var k=0;k<nP;k++){ var pxx=sx+k*gp; g.beginPath(); g.arc(pxx,yy,rad,0,Math.PI*2); g.fillStyle=pal[k][0]; g.fill(); g.lineWidth=3; g.strokeStyle='#ffffff'; g.stroke(); g.lineWidth=1; g.strokeStyle=GOLD2; g.beginPath(); g.arc(pxx,yy,rad+4,0,Math.PI*2); g.stroke(); g.fillStyle=SOFT; g.font='italic 17px Georgia, serif'; g.fillText(pal[k][1], pxx, yy+rad+27); }
-        yy+=rad+60; flourish(yy);
-        g.fillStyle=SOFT; g.font='italic 23px Georgia, serif'; g.fillText('Один день — целая жизнь, прожитая в любви', cx, yy+44);
-        g.fillStyle=NEPT; g.font='italic 30px Georgia, serif'; g.fillText('С любовью ждём '+youAcc+' ❤', cx, yy+88);
+        yy+=rad+70; flourish(yy);
+        g.fillStyle=SOFT; g.font='italic 23px Georgia, serif'; g.fillText('Один день — целая жизнь, прожитая в любви', cx, yy+50);
+        g.fillStyle=NEPT; g.font='italic 30px Georgia, serif'; g.fillText('Будем ждать '+youAcc+' ❤', cx, yy+96);
 
         var img=__cnv.toDataURL('image/jpeg',0.92);
         var jsPDF=window.jspdf.jsPDF;
