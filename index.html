@@ -2324,7 +2324,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const result = await resp.json();
         if (result.success === 'true' || result.success === true) {
           messageBox.className = 'form-message success';
-          messageBox.innerHTML = '✓ Спасибо! Ваш ответ отправлен. Мы с нетерпением ждём встречи! 💚';
+          messageBox.innerHTML = (data.attendance === 'Не смогу')
+            ? 'Очень жаль, что у вас не получится разделить этот момент с нами 🤍 Спасибо, что дали знать.'
+            : '✓ Спасибо! Ваш ответ отправлен. Мы с нетерпением ждём встречи! 💚';
           messageBox.style.display = 'block';
           form.reset();
         } else {
