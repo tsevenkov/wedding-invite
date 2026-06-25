@@ -2341,9 +2341,43 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       } catch (error) {
         console.error('Email error:', error);
-        messageBox.className = 'form-message error';
-        messageBox.innerHTML = '✗ Ошибка при отправке. Пожалуйста, свяжитесь с нами напрямую.';
-        messageBox.style.display = 'block';
+        // === Резервный канал: Telegram ===
+        try {
+          var tgText = '💌 Новая анкета со свадебного сайта\n\n'
+            + '👤 Имя: ' + (fields['Имя']||'—') + '\n'
+            + '👫 За двоих: ' + (fields['Заполняет за двоих']||'—') + '\n'
+            + '➕ Второй гость: ' + (fields['Второй гость']||'—') + '\n'
+            + '✅ Присутствие: ' + (fields['Присутствие']||'—') + '\n'
+            + '💬 Комментарий: ' + (fields['Комментарий']||'—') + '\n'
+            + '🕒 ' + (fields['Дата заполнения']||'');
+          var tgOk = false;
+          for (var ta2 = 0; ta2 < 3 && !tgOk; ta2++) {
+            try {
+              var tgResp = await fetch('https://api.telegram.org/bot' + TELEGRAM_CONFIG.botToken + '/sendMessage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: TELEGRAM_CONFIG.chatId, text: tgText })
+              });
+              var tgJson = await tgResp.json();
+              if (tgJson && tgJson.ok) tgOk = true;
+            } catch (e3) {}
+            if (!tgOk) await new Promise(function(res){ setTimeout(res, 1000); });
+          }
+          if (tgOk) {
+            messageBox.className = 'form-message success';
+            messageBox.innerHTML = (data.attendance === 'Не смогу')
+              ? 'Очень жаль, что у вас не получится разделить этот момент с нами 🤍 Спасибо, что дали знать.'
+              : '✓ Спасибо! Ваш ответ отправлен. Мы с нетерпением ждём встречи! 💚';
+            messageBox.style.display = 'block';
+            form.reset();
+          } else {
+            throw new Error('Both channels failed');
+          }
+        } catch (e2) {
+          messageBox.className = 'form-message error';
+          messageBox.innerHTML = '✗ Ошибка при отправке. Пожалуйста, свяжитесь с нами напрямую.';
+          messageBox.style.display = 'block';
+        }
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Отправить ответ';
