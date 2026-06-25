@@ -1052,12 +1052,7 @@ footer .heart { color: var(--gold-light); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-  .reveal { opacity: 1; transform: none; }
+  .reveal { opacity: 1 !important; transform: none !important; }
 }
 
 @media print {
@@ -1066,16 +1061,16 @@ footer .heart { color: var(--gold-light); }
   section { page-break-inside: avoid; }
 }
 
-.contact-card{max-width:480px;margin:0 auto;padding:38px 32px;background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(247,243,234,.92));border:1.5px solid var(--gold,#C2A368);border-radius:18px;box-shadow:0 12px 40px rgba(60,81,105,.12);position:relative;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
-.contact-card .cc-orn{font-size:34px;color:var(--gold,#C2A368);line-height:1;margin-bottom:10px;}
-.contact-card .cc-label{font-family:Georgia,serif;font-style:italic;color:var(--soft,#5E7081);font-size:16px;letter-spacing:.3px;margin-bottom:14px;}
-.contact-card .cc-phone{display:inline-block;font-family:Georgia,serif;font-size:30px;font-weight:600;color:var(--neptune,#3C5169);text-decoration:none;letter-spacing:.5px;padding:8px 22px;border-radius:30px;border:1.4px solid rgba(194,163,104,.6);transition:all .25s ease;}
+.contact-card{max-width:460px;margin:0 auto;padding:36px 30px;background:linear-gradient(160deg,#FBF8F1,#F3ECDD);border:1.5px solid var(--gold-light,#C2A368);border-radius:18px;box-shadow:0 10px 34px rgba(60,81,105,.10);position:relative;}
+.contact-card .cc-orn{font-size:32px;color:var(--gold-light,#C2A368);line-height:1;margin-bottom:8px;}
+.contact-card .cc-label{font-family:Georgia,serif;font-style:italic;color:var(--text-light,#5E7081);font-size:16px;letter-spacing:.3px;margin-bottom:14px;}
+.contact-card .cc-phone{display:inline-block;font-family:Georgia,serif;font-size:29px;font-weight:600;color:var(--sage-deep,#3C5169);text-decoration:none;letter-spacing:.5px;padding:9px 24px;border-radius:32px;border:1.4px solid rgba(194,163,104,.6);transition:all .25s ease;}
 .contact-card .cc-phone:hover{background:linear-gradient(135deg,#C2A368,#9A7B3F);color:#fff;transform:translateY(-2px);box-shadow:0 8px 22px rgba(154,123,63,.35);}
 .contact-card .cc-div{display:flex;align-items:center;justify-content:center;gap:14px;margin:20px 0 8px;}
-.contact-card .cc-div:before,.contact-card .cc-div:after{content:"";height:1px;width:60px;background:linear-gradient(90deg,transparent,var(--gold,#C2A368),transparent);}
-.contact-card .cc-div span{color:var(--gold,#C2A368);font-size:16px;}
-.contact-card .cc-sub{font-family:Georgia,serif;font-style:italic;color:var(--soft,#5E7081);font-size:15px;}
-@media (max-width:480px){.contact-card{padding:30px 20px;}.contact-card .cc-phone{font-size:24px;padding:7px 16px;}}
+.contact-card .cc-div:before,.contact-card .cc-div:after{content:"";height:1px;width:60px;background:linear-gradient(90deg,transparent,var(--gold-light,#C2A368),transparent);}
+.contact-card .cc-div span{color:var(--gold-light,#C2A368);font-size:16px;}
+.contact-card .cc-sub{font-family:Georgia,serif;font-style:italic;color:var(--text-light,#5E7081);font-size:15px;}
+@media (max-width:480px){.contact-card{padding:28px 18px;}.contact-card .cc-phone{font-size:23px;padding:8px 16px;}}}
 
 </style>
 
@@ -2148,7 +2143,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   </div>
 </section>
 
-<section class="contact-section reveal" style="text-align:center;padding:50px 0 64px;">
+<section class="contact-section reveal" style="background:var(--cream);text-align:center;padding:56px 0 70px;">
   <div class="container">
     <div class="contact-card">
       <div class="cc-orn">&#10086;</div>
@@ -2288,21 +2283,25 @@ document.addEventListener('DOMContentLoaded', function() {
   // ===== SCROLL REVEAL (Анимация появления) =====
   const revealElements = document.querySelectorAll('.reveal');
   if (revealElements.length > 0) {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.15 });
-    
-    revealElements.forEach(el => observer.observe(el));
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -5% 0px' });
+      revealElements.forEach(el => observer.observe(el));
+      setTimeout(function(){ revealElements.forEach(function(el){ el.classList.add('visible'); }); }, 2500);
+    } else {
+      revealElements.forEach(function(el){ el.classList.add('visible'); });
+    }
   }
   
   // ===== FLOATING LEAVES (Летящие листочки) =====
   function createFloatingLeaf() {
-    if (window.innerWidth < 768) return;
+    if (window.innerWidth < 320) return;
     
     const leaf = document.createElement('div');
     leaf.className = 'floating-leaf';
