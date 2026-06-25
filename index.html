@@ -2798,7 +2798,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         status.style.color='#7E957D'; status.textContent = __isIOS ? 'Готово! Открываем PDF — нажми «Поделиться» → «Сохранить в Файлы» 💌' : 'Готово! Приглашение для «'+displayName+'» скачано 💌';
       }catch(err){
-        status.style.color='#b5524a'; status.textContent='Не удалось создать PDF: '+err.message; if(__iosWin && !__iosWin.closed){ try{ __iosWin.close(); }catch(e){} }
+        status.style.color='#b5524a'; status.textContent='Не удалось создать PDF: '+err.message; if(typeof __iosWin!=='undefined' && __iosWin && !__iosWin.closed){ try{ __iosWin.document.open(); __iosWin.document.write('<div style="padding:24px;font-family:-apple-system,sans-serif;font-size:16px;line-height:1.5;color:#900;white-space:pre-wrap"><b>Ошибка генерации PDF:</b>\n\n'+(err && (err.stack||err.message||String(err)))+'</div>'); __iosWin.document.close(); }catch(e2){} }
       }finally{
         card.remove();
       }
