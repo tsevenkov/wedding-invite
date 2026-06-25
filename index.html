@@ -2356,6 +2356,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
 
+      // ===== Обязательное поле: подтверждение присутствия =====
+      if (!data.attendance) {
+        messageBox.className = 'form-message error';
+        messageBox.style.display = 'block';
+        messageBox.textContent = '⚠️ Пожалуйста, подтвердите присутствие — выберите один из вариантов.';
+        var att = document.querySelector('.radio-group');
+        if (att) { att.scrollIntoView({behavior:'smooth', block:'center'}); }
+        return;
+      }
+
       const fields = {
         '_subject': '💍 Новая анкета со свадебного сайта',
         '_template': 'table',
