@@ -2772,13 +2772,26 @@ document.addEventListener('DOMContentLoaded', function() {
         var pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
         pdf.addImage(img,'JPEG',0,0,pw,ph,undefined,'FAST');
         if (__isIOS) {
-          var blob = pdf.output('blob');
-          if (__iosWin && !__iosWin.closed) {
-            var childURL = __iosWin.URL || __iosWin.webkitURL;
-            var u = childURL ? childURL.createObjectURL(blob) : URL.createObjectURL(blob);
-            __iosWin.location.href = u;
+          var __blob = pdf.output('blob');
+          var __fname = 'Приглашение - '+displayName+'.pdf';
+          var __shared = false;
+          try {
+            var __file = new File([__blob], __fname, { type: 'application/pdf' });
+            if (navigator.canShare && navigator.canShare({ files: [__file] })) {
+              await navigator.share({ files: [__file], title: 'Приглашение' });
+              __shared = true;
+            }
+          } catch (e) { __shared = (e && (e.name === 'AbortError')); }
+          if (__shared) {
+            if (__iosWin && !__iosWin.closed) { try { __iosWin.close(); } catch(_e){} }
           } else {
-            window.location.href = URL.createObjectURL(blob);
+            var __w = (__iosWin && !__iosWin.closed) ? __iosWin : window.open('', '_blank');
+            if (__w) {
+              var __u = ((__w.URL || __w.webkitURL || URL)).createObjectURL(__blob);
+              __w.document.open();
+              __w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Приглашение</title><style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#CFCFC4;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:24px;box-sizing:border-box}.b{display:inline-block;background:#1f3a5f;color:#fff;text-decoration:none;font-size:20px;font-weight:600;padding:18px 32px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.25)}p{color:#444;font-size:15px;margin-top:22px;max-width:300px;line-height:1.5}</style></head><body><div><a class="b" href="'+__u+'">📄 Открыть приглашение</a><p>Нажмите кнопку выше, затем значок «Поделиться» (□↑) → «Сохранить в Файлы»</p></div></body></html>');
+              __w.document.close();
+            }
           }
         } else {
           pdf.save('Приглашение - '+displayName+'.pdf');
