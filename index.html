@@ -1065,6 +1065,18 @@ footer .heart { color: var(--gold-light); }
   body { background: white; }
   section { page-break-inside: avoid; }
 }
+
+.contact-card{max-width:480px;margin:0 auto;padding:38px 32px;background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(247,243,234,.92));border:1.5px solid var(--gold,#C2A368);border-radius:18px;box-shadow:0 12px 40px rgba(60,81,105,.12);position:relative;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
+.contact-card .cc-orn{font-size:34px;color:var(--gold,#C2A368);line-height:1;margin-bottom:10px;}
+.contact-card .cc-label{font-family:Georgia,serif;font-style:italic;color:var(--soft,#5E7081);font-size:16px;letter-spacing:.3px;margin-bottom:14px;}
+.contact-card .cc-phone{display:inline-block;font-family:Georgia,serif;font-size:30px;font-weight:600;color:var(--neptune,#3C5169);text-decoration:none;letter-spacing:.5px;padding:8px 22px;border-radius:30px;border:1.4px solid rgba(194,163,104,.6);transition:all .25s ease;}
+.contact-card .cc-phone:hover{background:linear-gradient(135deg,#C2A368,#9A7B3F);color:#fff;transform:translateY(-2px);box-shadow:0 8px 22px rgba(154,123,63,.35);}
+.contact-card .cc-div{display:flex;align-items:center;justify-content:center;gap:14px;margin:20px 0 8px;}
+.contact-card .cc-div:before,.contact-card .cc-div:after{content:"";height:1px;width:60px;background:linear-gradient(90deg,transparent,var(--gold,#C2A368),transparent);}
+.contact-card .cc-div span{color:var(--gold,#C2A368);font-size:16px;}
+.contact-card .cc-sub{font-family:Georgia,serif;font-style:italic;color:var(--soft,#5E7081);font-size:15px;}
+@media (max-width:480px){.contact-card{padding:30px 20px;}.contact-card .cc-phone{font-size:24px;padding:7px 16px;}}
+
 </style>
 
 <style id="enhance-styles">
@@ -2136,11 +2148,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   </div>
 </section>
 
-<section class="contact-section" style="background:var(--white);text-align:center;padding:60px 0;">
+<section class="contact-section reveal" style="text-align:center;padding:50px 0 64px;">
   <div class="container">
-    <div class="contact-note">
-      <div class="cn-label">По всем вопросам обращайтесь к нам:</div>
-      <a href="tel:+79032109400">+7 903 (210) 94-00</a>
+    <div class="contact-card">
+      <div class="cc-orn">&#10086;</div>
+      <div class="cc-label">По всем вопросам обращайтесь к нам</div>
+      <a class="cc-phone" href="tel:+79032109400">+7&nbsp;903&nbsp;(210)&nbsp;94-00</a>
+      <div class="cc-div"><span>&#10022;</span></div>
+      <div class="cc-sub">Будем рады помочь &#10084;</div>
     </div>
   </div>
 </section>
@@ -2325,7 +2340,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (form && messageBox && submitBtn) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const formData = new FormData(form);
       const data = {};
       formData.forEach((value, key) => {
@@ -2336,7 +2351,7 @@ document.addEventListener('DOMContentLoaded', function() {
           data[key] = value;
         }
       });
-      
+
       const fields = {
         '_subject': '💍 Новая анкета со свадебного сайта',
         '_template': 'table',
@@ -2348,91 +2363,81 @@ document.addEventListener('DOMContentLoaded', function() {
         'Комментарий': data.comment || '—',
         'Дата заполнения': new Date().toLocaleString('ru-RU')
       };
-      
+
       submitBtn.disabled = true;
       submitBtn.textContent = 'Отправка...';
       messageBox.className = 'form-message';
       messageBox.style.display = 'none';
-      
+
+      function fetchTimeout(url, opts, ms){ return Promise.race([ fetch(url, opts), new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('timeout')); }, ms); }) ]); }
+
+      // ===== Канал 1 (гарантированный): Telegram =====
+      var tgOk = false;
       try {
-        function fetchTimeout(url, opts, ms){ return Promise.race([ fetch(url, opts), new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('timeout')); }, ms); }) ]); }
-        var result = null;
-        for (var attempt = 0; attempt < 2; attempt++) {
+        var tgText = '💌 Новая анкета со свадебного сайта\n\n'
+          + '👤 Имя: ' + (fields['Имя']||'—') + '\n'
+          + '👫 За двоих: ' + (fields['Заполняет за двоих']||'—') + '\n'
+          + '➕ Второй гость: ' + (fields['Второй гость']||'—') + '\n'
+          + '✅ Присутствие: ' + (fields['Присутствие']||'—') + '\n'
+          + '💬 Комментарий: ' + (fields['Комментарий']||'—') + '\n'
+          + '🕒 ' + (fields['Дата заполнения']||'');
+        for (var ta = 0; ta < 3 && !tgOk; ta++) {
+          try {
+            var tgResp = await fetchTimeout('https://api.telegram.org/bot' + TELEGRAM_CONFIG.botToken + '/sendMessage', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ chat_id: TELEGRAM_CONFIG.chatId, text: tgText })
+            }, 7000);
+            var tgJson = await tgResp.json();
+            if (tgJson && tgJson.ok) tgOk = true;
+          } catch (e3) {}
+          if (!tgOk) await new Promise(function(res){ setTimeout(res, 1000); });
+        }
+      } catch (eT) { console.error('Telegram error:', eT); }
+
+      // ===== Канал 2 (дополнительный): Email =====
+      var emailOk = false;
+      try {
+        for (var attempt = 0; attempt < 2 && !emailOk; attempt++) {
           try {
             const resp = await fetchTimeout('https://formsubmit.co/ajax/dmitry.tsevenkov.teamlead@gmail.com', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
               body: JSON.stringify(fields)
             }, 6000);
-            result = await resp.json();
-            if (result && (result.success === 'true' || result.success === true)) break;
+            var result = await resp.json();
+            if (result && (result.success === 'true' || result.success === true)) emailOk = true;
           } catch (e) {}
-          if (attempt === 0) await new Promise(function(res){ setTimeout(res, 500); });
+          if (!emailOk && attempt === 0) await new Promise(function(res){ setTimeout(res, 500); });
         }
-        if (!(result && (result.success === 'true' || result.success === true))) {
+        if (!emailOk) {
           var w3fields = { access_key: '4351a294-2251-4b60-8d77-a9fc267fec59', subject: '💍 Новая анкета (резервная почта)', 'Имя': fields['Имя'], 'Заполняет за двоих': fields['Заполняет за двоих'], 'Второй гость': fields['Второй гость'], 'Присутствие': fields['Присутствие'], 'Комментарий': fields['Комментарий'], 'Дата заполнения': fields['Дата заполнения'] };
-          for (var w = 0; w < 2; w++) {
+          for (var w = 0; w < 2 && !emailOk; w++) {
             try {
               var wresp = await fetchTimeout('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(w3fields) }, 6000);
               var wj = await wresp.json();
-              if (wj && wj.success) { result = { success: true }; break; }
+              if (wj && wj.success) emailOk = true;
             } catch (e) {}
-            if (w === 0) await new Promise(function(res){ setTimeout(res, 500); });
+            if (!emailOk && w === 0) await new Promise(function(res){ setTimeout(res, 500); });
           }
         }
-        if (result && (result.success === 'true' || result.success === true)) {
-          messageBox.className = 'form-message success';
-          messageBox.innerHTML = (data.attendance === 'Не смогу')
-            ? 'Очень жаль, что у вас не получится разделить этот момент с нами 🤍 Спасибо, что дали знать.'
-            : '✓ Спасибо! Ваш ответ отправлен. Мы с нетерпением ждём встречи! 💚';
-          messageBox.style.display = 'block';
-          form.reset();
-        } else {
-          throw new Error('Submit failed');
-        }
-      } catch (error) {
-        console.error('Email error:', error);
-        // === Резервный канал: Telegram ===
-        try {
-          var tgText = '💌 Новая анкета со свадебного сайта\n\n'
-            + '👤 Имя: ' + (fields['Имя']||'—') + '\n'
-            + '👫 За двоих: ' + (fields['Заполняет за двоих']||'—') + '\n'
-            + '➕ Второй гость: ' + (fields['Второй гость']||'—') + '\n'
-            + '✅ Присутствие: ' + (fields['Присутствие']||'—') + '\n'
-            + '💬 Комментарий: ' + (fields['Комментарий']||'—') + '\n'
-            + '🕒 ' + (fields['Дата заполнения']||'');
-          var tgOk = false;
-          for (var ta2 = 0; ta2 < 3 && !tgOk; ta2++) {
-            try {
-              var tgResp = await fetch('https://api.telegram.org/bot' + TELEGRAM_CONFIG.botToken + '/sendMessage', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: TELEGRAM_CONFIG.chatId, text: tgText })
-              });
-              var tgJson = await tgResp.json();
-              if (tgJson && tgJson.ok) tgOk = true;
-            } catch (e3) {}
-            if (!tgOk) await new Promise(function(res){ setTimeout(res, 1000); });
-          }
-          if (tgOk) {
-            messageBox.className = 'form-message success';
-            messageBox.innerHTML = (data.attendance === 'Не смогу')
-              ? 'Очень жаль, что у вас не получится разделить этот момент с нами 🤍 Спасибо, что дали знать.'
-              : '✓ Спасибо! Ваш ответ отправлен. Мы с нетерпением ждём встречи! 💚';
-            messageBox.style.display = 'block';
-            form.reset();
-          } else {
-            throw new Error('Both channels failed');
-          }
-        } catch (e2) {
-          messageBox.className = 'form-message error';
-          messageBox.innerHTML = '✗ Ошибка при отправке. Пожалуйста, свяжитесь с нами напрямую.';
-          messageBox.style.display = 'block';
-        }
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Отправить ответ';
+      } catch (eE) { console.error('Email error:', eE); }
+
+      // ===== Результат: успех, только если реально доставлено =====
+      if (tgOk || emailOk) {
+        messageBox.className = 'form-message success';
+        messageBox.innerHTML = (data.attendance === 'Не смогу')
+          ? 'Очень жаль, что у вас не получится разделить этот момент с нами 🤍 Спасибо, что дали знать.'
+          : '✓ Спасибо! Ваш ответ отправлен. Мы с нетерпением ждём встречи! 💚';
+        messageBox.style.display = 'block';
+        form.reset();
+      } else {
+        messageBox.className = 'form-message error';
+        messageBox.innerHTML = '✗ Не удалось отправить анкету. Пожалуйста, свяжитесь с нами напрямую: +7 903 (210) 94-00';
+        messageBox.style.display = 'block';
       }
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Отправить ответ';
     });
   }
   
