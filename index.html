@@ -2371,31 +2371,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       function fetchTimeout(url, opts, ms){ return Promise.race([ fetch(url, opts), new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('timeout')); }, ms); }) ]); }
 
-      // ===== Канал 1 (гарантированный): Telegram =====
-      var tgOk = false;
-      try {
-        var tgText = '💌 Новая анкета со свадебного сайта\n\n'
-          + '👤 Имя: ' + (fields['Имя']||'—') + '\n'
-          + '👫 За двоих: ' + (fields['Заполняет за двоих']||'—') + '\n'
-          + '➕ Второй гость: ' + (fields['Второй гость']||'—') + '\n'
-          + '✅ Присутствие: ' + (fields['Присутствие']||'—') + '\n'
-          + '💬 Комментарий: ' + (fields['Комментарий']||'—') + '\n'
-          + '🕒 ' + (fields['Дата заполнения']||'');
-        for (var ta = 0; ta < 3 && !tgOk; ta++) {
-          try {
-            var tgResp = await fetchTimeout('https://api.telegram.org/bot' + TELEGRAM_CONFIG.botToken + '/sendMessage', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ chat_id: TELEGRAM_CONFIG.chatId, text: tgText })
-            }, 7000);
-            var tgJson = await tgResp.json();
-            if (tgJson && tgJson.ok) tgOk = true;
-          } catch (e3) {}
-          if (!tgOk) await new Promise(function(res){ setTimeout(res, 1000); });
-        }
-      } catch (eT) { console.error('Telegram error:', eT); }
-
-      // ===== Канал 2 (дополнительный): Email =====
+      // ===== Основной канал 1: FormSubmit (почта) =====
       var emailOk = false;
       try {
         for (var attempt = 0; attempt < 2 && !emailOk; attempt++) {
@@ -2410,7 +2386,11 @@ document.addEventListener('DOMContentLoaded', function() {
           } catch (e) {}
           if (!emailOk && attempt === 0) await new Promise(function(res){ setTimeout(res, 500); });
         }
-        if (!emailOk) {
+      } catch (eF) { console.error('FormSubmit error:', eF); }
+
+      // ===== Основной канал 2: Web3Forms (резервная почта) =====
+      if (!emailOk) {
+        try {
           var w3fields = { access_key: '4351a294-2251-4b60-8d77-a9fc267fec59', subject: '💍 Новая анкета (резервная почта)', 'Имя': fields['Имя'], 'Заполняет за двоих': fields['Заполняет за двоих'], 'Второй гость': fields['Второй гость'], 'Присутствие': fields['Присутствие'], 'Комментарий': fields['Комментарий'], 'Дата заполнения': fields['Дата заполнения'] };
           for (var w = 0; w < 2 && !emailOk; w++) {
             try {
@@ -2420,11 +2400,37 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (e) {}
             if (!emailOk && w === 0) await new Promise(function(res){ setTimeout(res, 500); });
           }
-        }
-      } catch (eE) { console.error('Email error:', eE); }
+        } catch (eW) { console.error('Web3Forms error:', eW); }
+      }
 
-      // ===== Результат: успех, только если реально доставлено =====
-      if (tgOk || emailOk) {
+      // ===== Запасной канал: Telegram (только если обе почты не сработали) =====
+      var tgOk = false;
+      if (!emailOk) {
+        try {
+          var tgText = '💌 Новая анкета со свадебного сайта\n\n'
+            + '👤 Имя: ' + (fields['Имя']||'—') + '\n'
+            + '👫 За двоих: ' + (fields['Заполняет за двоих']||'—') + '\n'
+            + '➕ Второй гость: ' + (fields['Второй гость']||'—') + '\n'
+            + '✅ Присутствие: ' + (fields['Присутствие']||'—') + '\n'
+            + '💬 Комментарий: ' + (fields['Комментарий']||'—') + '\n'
+            + '🕒 ' + (fields['Дата заполнения']||'');
+          for (var ta = 0; ta < 3 && !tgOk; ta++) {
+            try {
+              var tgResp = await fetchTimeout('https://api.telegram.org/bot' + TELEGRAM_CONFIG.botToken + '/sendMessage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: TELEGRAM_CONFIG.chatId, text: tgText })
+              }, 7000);
+              var tgJson = await tgResp.json();
+              if (tgJson && tgJson.ok) tgOk = true;
+            } catch (e3) {}
+            if (!tgOk) await new Promise(function(res){ setTimeout(res, 1000); });
+          }
+        } catch (eT) { console.error('Telegram error:', eT); }
+      }
+
+      // ===== Результат =====
+      if (emailOk || tgOk) {
         messageBox.className = 'form-message success';
         messageBox.innerHTML = (data.attendance === 'Не смогу')
           ? 'Очень жаль, что у вас не получится разделить этот момент с нами 🤍 Спасибо, что дали знать.'
