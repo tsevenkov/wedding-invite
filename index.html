@@ -2769,37 +2769,48 @@ document.addEventListener('DOMContentLoaded', function() {
         var W=1240, H=1754;
         var __cnv=document.createElement('canvas'); __cnv.width=W; __cnv.height=H;
         var g=__cnv.getContext('2d');
-        g.fillStyle='#F7F3EA'; g.fillRect(0,0,W,H);
-        g.strokeStyle='#9A7B3F'; g.lineWidth=3; g.strokeRect(46,46,W-92,H-92);
-        g.strokeStyle='#C2A368'; g.lineWidth=1.5; g.strokeRect(60,60,W-120,H-120);
         var cx=W/2;
+        var GOLD='#9A7B3F', GOLD2='#C2A368', NEPT='#3C5169', INK='#34465A', SOFT='#5E7081';
+        g.fillStyle='#F7F3EA'; g.fillRect(0,0,W,H);
+        g.strokeStyle=GOLD; g.lineWidth=3; g.strokeRect(44,44,W-88,H-88);
+        g.strokeStyle=GOLD2; g.lineWidth=1.4; g.strokeRect(58,58,W-116,H-116);
         g.textAlign='center'; g.textBaseline='alphabetic';
-        function divline(y){ g.strokeStyle='#C2A368'; g.lineWidth=1; g.beginPath(); g.moveTo(cx-150,y); g.lineTo(cx-26,y); g.moveTo(cx+26,y); g.lineTo(cx+150,y); g.stroke(); g.fillStyle='#9A7B3F'; g.font='26px Georgia, serif'; g.fillText('❦', cx, y+9); }
-        g.fillStyle='#C2A368'; g.font='42px Georgia, serif';
-        g.fillText('❧', 105, 118); g.fillText('❧', W-105, 118); g.fillText('❧', 105, H-78); g.fillText('❧', W-105, H-78);
-        function wrap(text, y, font, color, maxW, lh){ g.font=font; g.fillStyle=color; var words=text.split(' '); var ls=''; var arr=[]; for(var i=0;i<words.length;i++){ var t=ls?ls+' '+words[i]:words[i]; if(g.measureText(t).width>maxW && ls){ arr.push(ls); ls=words[i]; } else ls=t; } if(ls) arr.push(ls); for(var j=0;j<arr.length;j++){ g.fillText(arr[j], cx, y+j*lh); } return y+arr.length*lh; }
-        divline(150);
-        g.fillStyle='#9A7B3F'; g.font='40px Georgia, serif'; g.fillText('08 · 08 · 2026', cx, 232);
-        g.fillStyle='#3C5169'; g.font='italic 46px Georgia, serif'; g.fillText(dear+' '+displayName+'!', cx, 322);
-        var y=wrap('Мы рады пригласить тебя разделить с нами один из самых важных дней нашей жизни — день, когда мы соединим свои сердца и судьбы.', 392, '28px Georgia, serif', '#34465A', W-320, 44);
-        g.fillStyle='#3C5169'; g.font='italic 62px Georgia, serif'; g.fillText('Дмитрий & Екатерина', cx, y+74);
-        g.fillStyle='#5E7081'; g.font='italic 27px Georgia, serif'; g.fillText('приглашают вас на свадьбу', cx, y+118);
-        var yy=y+185; divline(yy-32);
-        g.fillStyle='#9A7B3F'; g.font='34px Georgia, serif'; g.fillText('Программа дня', cx, yy+12); yy+=56;
+        function corner(px,py,fx,fy){ g.save(); g.translate(px,py); g.scale(fx,fy); g.fillStyle=GOLD2; g.font='46px Georgia, serif'; g.fillText('❧', 0, 0); g.restore(); }
+        corner(102,122,1,1); corner(W-102,122,-1,1); corner(102,H-86,1,-1); corner(W-102,H-86,-1,-1);
+        function flourish(y){ g.strokeStyle=GOLD2; g.lineWidth=1; g.beginPath(); g.moveTo(cx-170,y); g.lineTo(cx-40,y); g.moveTo(cx+40,y); g.lineTo(cx+170,y); g.stroke(); g.fillStyle=GOLD; g.font='17px Georgia, serif'; g.fillText('❖', cx-40, y+5); g.fillText('❖', cx+40, y+5); g.font='28px Georgia, serif'; g.fillText('❦', cx, y+9); }
+        function dots(y){ g.fillStyle=GOLD2; g.font='20px Georgia, serif'; g.fillText('·   ·   ·', cx, y); }
+        function wrap(text,y,font,color,maxW,lh){ g.font=font; g.fillStyle=color; var words=text.split(' '); var ls=''; var arr=[]; for(var i=0;i<words.length;i++){ var t=ls?ls+' '+words[i]:words[i]; if(g.measureText(t).width>maxW && ls){ arr.push(ls); ls=words[i]; } else ls=t; } if(ls) arr.push(ls); for(var j=0;j<arr.length;j++){ g.fillText(arr[j], cx, y+j*lh); } return y+arr.length*lh; }
+        function rrect(x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+
+        g.fillStyle=GOLD; g.font='40px Georgia, serif'; g.fillText('❦', cx, 138);
+        g.fillStyle=GOLD; g.font='22px Georgia, serif'; g.fillText('С  Р А Д О С Т Ь Ю  П Р И Г Л А Ш А Е М', cx, 196);
+        g.fillStyle=NEPT; g.font='italic 46px Georgia, serif'; g.fillText(dear+' '+displayName+'!', cx, 268);
+        var y=wrap('Есть события, которые остаются в памяти на всю жизнь. Для нас таким станет день, когда мы соединим наши сердца и судьбы.', 330, 'italic 27px Georgia, serif', INK, W-300, 40);
+        y=wrap('Мы будем счастливы разделить с тобой радость этого дня — твоё присутствие и поддержка особенно дороги нам.', y+16, 'italic 27px Georgia, serif', INK, W-300, 40);
+        dots(y+34);
+        g.fillStyle=NEPT; g.font='italic 60px Georgia, serif'; g.fillText('Дмитрий & Екатерина', cx, y+118);
+        g.fillStyle=SOFT; g.font='italic 26px Georgia, serif'; g.fillText('приглашают тебя на свою свадьбу', cx, y+160);
+        g.fillStyle=GOLD; g.font='30px Georgia, serif'; g.fillText('8 августа 2026 года', cx, y+208);
+        var yy=y+260; flourish(yy-30);
+        g.fillStyle=GOLD; g.font='32px Georgia, serif'; g.fillText('П Р О Г Р А М М А   Д Н Я', cx, yy+10); yy+=54;
         var prog=[['15:30','Сбор гостей'],['16:00','Торжественная церемония'],['17:00','Праздничный банкет'],['21:00','Завершение вечера']];
         g.font='26px Georgia, serif';
-        for(var p=0;p<prog.length;p++){ g.textAlign='right'; g.fillStyle='#3C5169'; g.fillText(prog[p][0], cx-24, yy); g.textAlign='left'; g.fillStyle='#34465A'; g.fillText(prog[p][1], cx+24, yy); yy+=46; }
-        g.textAlign='center'; yy+=18; divline(yy-32);
-        g.fillStyle='#9A7B3F'; g.font='34px Georgia, serif'; g.fillText('Место проведения', cx, yy+12); yy+=58;
-        g.fillStyle='#3C5169'; g.font='italic 34px Georgia, serif'; g.fillText('Ресторан «Ферма»', cx, yy); yy+=44;
-        g.fillStyle='#5E7081'; g.font='24px Georgia, serif'; g.fillText('г. Серпухов, Тульская ул., 1 к1', cx, yy); yy+=64;
-        divline(yy-32);
-        g.fillStyle='#9A7B3F'; g.font='34px Georgia, serif'; g.fillText('Цветовая гамма', cx, yy+12); yy+=78;
-        var pal=[['#3C5169','Нептун'],['#8FA9C4','Пыльно-голубой'],['#7E957D','Шалфей'],['#CFCFC4','Серый'],['#C2A368','Золото']];
-        var nP=pal.length, gp=152, sx=cx-(nP-1)*gp/2, rad=34;
-        for(var k=0;k<nP;k++){ var pxx=sx+k*gp; g.beginPath(); g.arc(pxx,yy,rad,0,Math.PI*2); g.fillStyle=pal[k][0]; g.fill(); g.lineWidth=3; g.strokeStyle='#ffffff'; g.stroke(); g.fillStyle='#5E7081'; g.font='italic 17px Georgia, serif'; g.fillText(pal[k][1], pxx, yy+rad+26); }
-        yy+=rad+72; divline(yy);
-        g.fillStyle='#9A7B3F'; g.font='italic 30px Georgia, serif'; g.fillText('С любовью ждём вас!', cx, yy+52);
+        for(var p=0;p<prog.length;p++){ g.textAlign='right'; g.fillStyle=NEPT; g.fillText(prog[p][0], cx-22, yy); g.textAlign='left'; g.fillStyle=INK; g.fillText(prog[p][1], cx+22, yy); yy+=44; }
+        g.textAlign='center'; yy+=14; flourish(yy-28);
+        g.fillStyle=GOLD; g.font='32px Georgia, serif'; g.fillText('М Е С Т О   П Р О В Е Д Е Н И Я', cx, yy+10); yy+=54;
+        g.fillStyle=NEPT; g.font='italic 34px Georgia, serif'; g.fillText('Ресторан «Ферма»', cx, yy); yy+=42;
+        g.fillStyle=SOFT; g.font='23px Georgia, serif'; g.fillText('г. Серпухов, Тульская ул., 1 к1', cx, yy); yy+=58;
+        flourish(yy-28);
+        g.fillStyle=GOLD; g.font='32px Georgia, serif'; g.fillText('Ц В Е Т О В А Я   Г А М М А', cx, yy+10); yy+=72;
+        var pal=[['#3C5169','Нептун'],['#8FA9C4','Голубой'],['#7E957D','Шалфей'],['#CFCFC4','Серый'],['#C2A368','Золото']];
+        var nP=pal.length, gp=150, sx=cx-(nP-1)*gp/2, rad=32;
+        for(var k=0;k<nP;k++){ var pxx=sx+k*gp; g.beginPath(); g.arc(pxx,yy,rad,0,Math.PI*2); g.fillStyle=pal[k][0]; g.fill(); g.lineWidth=3; g.strokeStyle='#ffffff'; g.stroke(); g.lineWidth=1; g.strokeStyle=GOLD2; g.beginPath(); g.arc(pxx,yy,rad+4,0,Math.PI*2); g.stroke(); g.fillStyle=SOFT; g.font='italic 17px Georgia, serif'; g.fillText(pal[k][1], pxx, yy+rad+28); }
+        yy+=rad+66; flourish(yy);
+        g.fillStyle=SOFT; g.font='italic 22px Georgia, serif'; g.fillText('По всем вопросам обращайтесь к нам:', cx, yy+44);
+        var boxW=320, boxH=54; rrect(cx-boxW/2, yy+62, boxW, boxH, 27); g.strokeStyle=GOLD2; g.lineWidth=1.6; g.stroke();
+        g.fillStyle=NEPT; g.font='26px Georgia, serif'; g.fillText('+7 903 (210) 94-00', cx, yy+62+35);
+        g.fillStyle=GOLD; g.font='italic 26px Georgia, serif'; g.fillText('С любовью ждём вас ❤', cx, yy+160);
+
         var img=__cnv.toDataURL('image/jpeg',0.92);
         var jsPDF=window.jspdf.jsPDF;
         var pdf=new jsPDF('p','pt','a4');
