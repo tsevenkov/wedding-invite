@@ -2316,13 +2316,20 @@ document.addEventListener('DOMContentLoaded', function() {
       messageBox.style.display = 'none';
       
       try {
-        const resp = await fetch('https://formsubmit.co/ajax/dmitry.tsevenkov.teamlead@gmail.com', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify(fields)
-        });
-        const result = await resp.json();
-        if (result.success === 'true' || result.success === true) {
+        var result = null, lastErr = null;
+        for (var attempt = 0; attempt < 4; attempt++) {
+          try {
+            const resp = await fetch('https://formsubmit.co/ajax/dmitry.tsevenkov.teamlead@gmail.com', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              body: JSON.stringify(fields)
+            });
+            result = await resp.json();
+            if (result && (result.success === 'true' || result.success === true)) break;
+          } catch (e) { lastErr = e; }
+          await new Promise(function(res){ setTimeout(res, 1200); });
+        }
+        if (result && (result.success === 'true' || result.success === true)) {
           messageBox.className = 'form-message success';
           messageBox.innerHTML = (data.attendance === 'Не смогу')
             ? 'Очень жаль, что у вас не получится разделить этот момент с нами 🤍 Спасибо, что дали знать.'
