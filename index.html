@@ -2369,39 +2369,44 @@ document.addEventListener('DOMContentLoaded', function() {
 
       function fetchTimeout(url, opts, ms){ return Promise.race([ fetch(url, opts), new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('timeout')); }, ms); }) ]); }
 
-      // ===== Основной канал 1: FormSubmit (почта) =====
-      var emailOk = false;
-      try {
-        for (var attempt = 0; attempt < 2 && !emailOk; attempt++) {
+      // ===== Две почты ОДНОВРЕМЕННО (параллельно) =====
+      // FormSubmit
+      async function sendFormSubmit() {
+        for (var a = 0; a < 2; a++) {
           try {
             const resp = await fetchTimeout('https://formsubmit.co/ajax/dmitry.tsevenkov.teamlead@gmail.com', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
               body: JSON.stringify(fields)
-            }, 6000);
+            }, 7000);
             var result = await resp.json();
-            if (result && (result.success === 'true' || result.success === true)) emailOk = true;
+            if (result && (result.success === 'true' || result.success === true)) return true;
           } catch (e) {}
-          if (!emailOk && attempt === 0) await new Promise(function(res){ setTimeout(res, 500); });
+          await new Promise(function(res){ setTimeout(res, 600); });
         }
-      } catch (eF) { console.error('FormSubmit error:', eF); }
-
-      // ===== Основной канал 2: Web3Forms (резервная почта) =====
-      if (!emailOk) {
-        try {
-          var w3fields = { access_key: '4351a294-2251-4b60-8d77-a9fc267fec59', subject: '💍 Новая анкета (резервная почта)', 'Имя': fields['Имя'], 'Заполняет за двоих': fields['Заполняет за двоих'], 'Второй гость': fields['Второй гость'], 'Присутствие': fields['Присутствие'], 'Комментарий': fields['Комментарий'], 'Дата заполнения': fields['Дата заполнения'] };
-          for (var w = 0; w < 2 && !emailOk; w++) {
-            try {
-              var wresp = await fetchTimeout('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(w3fields) }, 6000);
-              var wj = await wresp.json();
-              if (wj && wj.success) emailOk = true;
-            } catch (e) {}
-            if (!emailOk && w === 0) await new Promise(function(res){ setTimeout(res, 500); });
-          }
-        } catch (eW) { console.error('Web3Forms error:', eW); }
+        return false;
+      }
+      // Web3Forms
+      async function sendWeb3() {
+        var w3fields = { access_key: '4351a294-2251-4b60-8d77-a9fc267fec59', subject: '💍 Новая анкета (резервная почта)', 'Имя': fields['Имя'], 'Заполняет за двоих': fields['Заполняет за двоих'], 'Второй гость': fields['Второй гость'], 'Присутствие': fields['Присутствие'], 'Комментарий': fields['Комментарий'], 'Дата заполнения': fields['Дата заполнения'] };
+        for (var w = 0; w < 2; w++) {
+          try {
+            var wresp = await fetchTimeout('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(w3fields) }, 7000);
+            var wj = await wresp.json();
+            if (wj && wj.success) return true;
+          } catch (e) {}
+          await new Promise(function(res){ setTimeout(res, 600); });
+        }
+        return false;
       }
 
-      // ===== Запасной канал: Telegram (только если обе почты не сработали) =====
+      // Запускаем обе почты параллельно и ждём результата обеих
+      var mailResults = await Promise.allSettled([ sendFormSubmit(), sendWeb3() ]);
+      var fsOk = mailResults[0].status === 'fulfilled' && mailResults[0].value === true;
+      var w3Ok = mailResults[1].status === 'fulfilled' && mailResults[1].value === true;
+      var emailOk = fsOk || w3Ok;
+
+      // ===== Запасной канал: Telegram (только если ОБЕ почты не сработали) =====
       var tgOk = false;
       if (!emailOk) {
         try {
