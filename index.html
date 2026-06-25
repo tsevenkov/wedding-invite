@@ -2709,6 +2709,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
 
     btn.addEventListener('click', async function(){
+      var __isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      var __iosWin = __isIOS ? window.open('', '_blank') : null;
       var gn = (window.guestNames && window.guestNames.length) ? window.guestNames.slice() : [];
       if(!gn.length){ try{ gn = JSON.parse(localStorage.getItem('weddingGuests')||'[]')||[]; }catch(e){ gn=[]; } }
       if(!gn.length){ status.style.color='#9A7B3F'; status.textContent='Имя не указано. Обновите страницу и представьтесь 🙏'; return; }
@@ -2769,16 +2771,20 @@ document.addEventListener('DOMContentLoaded', function() {
         var pdf=new jsPDF('p','pt','a4');
         var pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
         pdf.addImage(img,'JPEG',0,0,pw,ph,undefined,'FAST');
-        var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        if (isIOS) {
-          var blobUrl = pdf.output('bloburl');
-          window.location.href = blobUrl;
+        if (__isIOS) {
+          var blob = pdf.output('blob');
+          var blobUrl = URL.createObjectURL(blob);
+          if (__iosWin && !__iosWin.closed) {
+            __iosWin.location.href = blobUrl;
+          } else {
+            var a = document.createElement('a'); a.href = blobUrl; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          }
         } else {
           pdf.save('Приглашение - '+displayName+'.pdf');
         }
-        status.style.color='#7E957D'; status.textContent = isIOS ? 'Готово! Открываем PDF — нажми «Поделиться» → «Сохранить в Файлы» 💌' : 'Готово! Приглашение для «'+displayName+'» скачано 💌';
+        status.style.color='#7E957D'; status.textContent = __isIOS ? 'Готово! Открываем PDF — нажми «Поделиться» → «Сохранить в Файлы» 💌' : 'Готово! Приглашение для «'+displayName+'» скачано 💌';
       }catch(err){
-        status.style.color='#b5524a'; status.textContent='Не удалось создать PDF: '+err.message;
+        status.style.color='#b5524a'; status.textContent='Не удалось создать PDF: '+err.message; if(__iosWin && !__iosWin.closed){ try{ __iosWin.close(); }catch(e){} }
       }finally{
         card.remove();
       }
