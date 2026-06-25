@@ -2092,14 +2092,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     
     <form class="rsvp-form" id="rsvp-form">
       <div class="form-group">
-        <label class="form-label" id="guest1-label">Гость</label>
-        <div id="rsvp-name-display" class="rsvp-name-display">Пожалуйста, представьтесь на стартовом экране ✨</div>
-        <input type="hidden" id="guest-name" name="name" value="">
-      </div>
-      <div class="form-group" id="guest2-group" style="display:none;">
-        <label class="form-label">Второй гость</label>
-        <div id="rsvp-name-display-2" class="rsvp-name-display"></div>
-        <input type="hidden" id="guest-name2" name="name2" value="">
+        <div id="rsvp-guests"><div class="rsvp-name-display">Пожалуйста, представьтесь на стартовом экране ✨</div></div>
+        <input type="hidden" id="guests-json" name="guestsJson" value="">
       </div>
       
       <div class="form-group">
@@ -2375,12 +2369,9 @@ document.addEventListener('DOMContentLoaded', function() {
         'Алкоголь': data.alcohol || '—',
         'Дата заполнения': new Date().toLocaleString('ru-RU')
       };
-      if (data.name2 && String(data.name2).trim()) {
-        fields['Первый гость'] = data.name || '—';
-        fields['Второй гость'] = data.name2;
-      } else {
-        fields['Гость'] = data.name || '—';
-      }
+      var __guests=[]; try{ __guests=JSON.parse(data.guestsJson||'[]')||[]; }catch(e){ __guests=[]; }
+      if(__guests.length<=1){ fields['Гость']=__guests[0]||'—'; }
+      else { var __o=['Первый','Второй','Третий','Четвёртый','Пятый','Шестой','Седьмой','Восьмой','Девятый','Десятый']; for(var __i=0;__i<__guests.length;__i++){ fields[(__o[__i]||(__i+1)+'-й')+' гость']=__guests[__i]; } }
 
       submitBtn.disabled = true;
       submitBtn.textContent = 'Отправка...';
@@ -2646,12 +2637,15 @@ document.addEventListener('DOMContentLoaded', function() {
   if(musicModal){
     var guestInputs = document.getElementById('guest-inputs');
     var addGuestBtn = document.getElementById('add-guest-btn');
+    function updateAddBtn(){ if(!addGuestBtn) return; var n=guestInputs.querySelectorAll('.guest-row').length; addGuestBtn.textContent = n>=2 ? '＋ Добавить ребёнка / родственника' : '＋ Добавить вторую половинку'; }
     function capN(s){ s=(s||'').trim(); return s ? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
     function collectGuests(){ var arr=[]; guestInputs.querySelectorAll('.guest-row').forEach(function(row){ var f=capN((row.querySelector('.gf-first')||{}).value); var l=capN((row.querySelector('.gf-last')||{}).value); if(f||l) arr.push({first:f,last:l}); }); return arr; }
     function firstNames(arr){ return arr.map(function(g){return g.first;}).filter(Boolean); }
     function fullNames(arr){ return arr.map(function(g){return (g.first+' '+g.last).trim();}).filter(Boolean); }
     function fmtNames(a){ if(!a.length) return ''; if(a.length===1) return a[0]; return a.slice(0,-1).join(', ')+' и '+a[a.length-1]; }
     function setVal(id,v){ var el=document.getElementById(id); if(el) el.value=v; }
+    function __esc(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){return c==='&'?'&amp;':c==='<'?'&lt;':'&gt;';}); }
+    function __ord(n){ var o=['Первый','Второй','Третий','Четвёртый','Пятый','Шестой','Седьмой','Восьмой','Девятый','Десятый']; return o[n] || ((n+1)+'-й'); }
     function applyGuests(arr){
       window.guestList=arr;
       var fn=firstNames(arr), full=fullNames(arr);
@@ -2659,34 +2653,32 @@ document.addEventListener('DOMContentLoaded', function() {
       try{ localStorage.setItem('weddingGuestsV2', JSON.stringify(arr)); localStorage.setItem('weddingGuests', JSON.stringify(fn)); }catch(e){}
       var g=document.getElementById('guest-greeting');
       if(g){ if(fn.length){ g.innerHTML='<span class="gn-orn">❦</span> '+fmtNames(fn)+' <span class="gn-orn">❦</span>'; g.style.display='block'; } else { g.style.display='none'; } }
-      var nd=document.getElementById('rsvp-name-display');
-      var nd2=document.getElementById('rsvp-name-display-2');
-      var lbl=document.getElementById('guest1-label');
-      var g2=document.getElementById('guest2-group');
-      if(full.length){
-        setVal('guest-name', full[0]); setVal('guest-name2', full[1]||'');
-        if(lbl) lbl.textContent = full.length>=2 ? 'Первый гость' : 'Гость';
-        if(nd) nd.textContent=full[0];
-        var two = full.length>=2;
-        if(two){ if(g2) g2.style.display='block'; if(nd2) nd2.textContent=full[1]; }
-        else { if(g2) g2.style.display='none'; if(nd2) nd2.textContent=''; }
-        var ly=document.getElementById('label-yes'), ln=document.getElementById('label-no');
-        if(ly) ly.textContent = two ? '✨ С радостью придём' : '✨ С радостью приду';
-        if(ln) ln.textContent = two ? 'К сожалению, не сможем' : 'К сожалению, не смогу';
-      } else {
-        setVal('guest-name',''); setVal('guest-name2','');
-        if(lbl) lbl.textContent='Гость';
-        if(nd) nd.textContent='Пожалуйста, представьтесь на стартовом экране ✨';
-        if(g2) g2.style.display='none'; if(nd2) nd2.textContent='';
+      var cont=document.getElementById('rsvp-guests');
+      var gj=document.getElementById('guests-json');
+      if(gj) gj.value=JSON.stringify(full);
+      if(cont){
+        if(!full.length){ cont.innerHTML='<div class="rsvp-name-display">Пожалуйста, представьтесь на стартовом экране ✨</div>'; }
+        else {
+          var h='';
+          for(var i=0;i<full.length;i++){
+            var lab = full.length===1 ? 'Гость' : (__ord(i)+' гость');
+            h+='<div style="margin-bottom:12px;"><label class="form-label" style="margin-bottom:6px;">'+__esc(lab)+'</label><div class="rsvp-name-display">'+__esc(full[i])+'</div></div>';
+          }
+          cont.innerHTML=h;
+        }
       }
+      var two = full.length>=2;
+      var ly=document.getElementById('label-yes'), ln=document.getElementById('label-no');
+      if(ly) ly.textContent = two ? '✨ С радостью придём' : '✨ С радостью приду';
+      if(ln) ln.textContent = two ? 'К сожалению, не сможем' : 'К сожалению, не смогу';
     }
     function addGuestRow(first,last){
       var row=document.createElement('div'); row.className='guest-row';
       var i1=document.createElement('input'); i1.type='text'; i1.className='guest-name-input gf-first'; i1.placeholder='Имя'; i1.autocomplete='given-name'; i1.style.flex='1'; i1.style.minWidth='0'; if(first) i1.value=first;
       var i2=document.createElement('input'); i2.type='text'; i2.className='guest-name-input gf-last'; i2.placeholder='Фамилия'; i2.autocomplete='family-name'; i2.style.flex='1'; i2.style.minWidth='0'; if(last) i2.value=last;
-      var rm=document.createElement('button'); rm.type='button'; rm.className='guest-remove'; rm.textContent='×'; rm.addEventListener('click', function(){ row.remove(); });
+      var rm=document.createElement('button'); rm.type='button'; rm.className='guest-remove'; rm.textContent='×'; rm.addEventListener('click', function(){ row.remove(); updateAddBtn(); });
       row.appendChild(i1); row.appendChild(i2); row.appendChild(rm);
-      guestInputs.appendChild(row); return i1;
+      guestInputs.appendChild(row); updateAddBtn(); return i1;
     }
     if(addGuestBtn){ addGuestBtn.addEventListener('click', function(){ addGuestRow('','').focus(); }); }
     try{
@@ -2698,6 +2690,7 @@ document.addEventListener('DOMContentLoaded', function() {
         for(var k=1;k<saved.length;k++){ addGuestRow(saved[k].first||'', saved[k].last||''); }
         applyGuests(saved);
       }
+      updateAddBtn();
     }catch(e){}
     document.getElementById('mm-enter').addEventListener('click', function(){ var arr=collectGuests(); applyGuests(arr); var cb=document.getElementById('mm-music-cb'); if(cb && cb.checked){ startMusicAuto(); } closeModal(); confettiBurst(); });
   }
