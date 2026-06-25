@@ -1724,16 +1724,33 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 #pdf-card .pc-hearts{font-size:22px;margin-top:0;letter-spacing:4px;}
 </style>
 
+<style>
+#guest-inputs{display:flex;flex-direction:column;gap:8px;margin:8px 0 4px;}
+.guest-name-input{font-family:'Cormorant Garamond',serif;font-size:17px;padding:11px 14px;border-radius:24px;border:1px solid rgba(154,123,63,.45);background:#fff;color:#34465A;outline:none;width:100%;box-sizing:border-box;text-align:center;}
+.guest-name-input:focus{border-color:#C9A96E;box-shadow:0 0 0 3px rgba(201,169,110,.18);}
+.guest-row{display:flex;gap:6px;align-items:center;}
+.guest-row .guest-name-input{flex:1;}
+.guest-remove{flex:0 0 auto;width:36px;height:36px;border-radius:50%;border:1px solid rgba(154,123,63,.4);background:#fff;color:#9A7B3F;cursor:pointer;font-size:20px;line-height:1;}
+#add-guest-btn{margin:2px 0 10px;background:transparent;border:1px dashed rgba(154,123,63,.5);color:#9A7B3F;border-radius:22px;padding:8px 16px;font-family:'Cormorant Garamond',serif;font-size:15px;cursor:pointer;transition:background .2s;}
+#add-guest-btn:hover{background:rgba(201,169,110,.1);}
+.mm-music-toggle{display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Cormorant Garamond',serif;font-size:15px;color:#34465A;margin:4px 0 14px;cursor:pointer;}
+.mm-music-toggle input{width:17px;height:17px;accent-color:#C9A96E;cursor:pointer;}
+#guest-greeting{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(20px,3vw,30px);color:#fff;margin:0 0 6px;text-shadow:0 2px 10px rgba(52,70,90,.55);}
+</style>
 </head>
 <body>
 <div id="music-modal">
   <div class="mm-card">
-    <div class="mm-icon">🎵</div>
-    <h3>Свадебная музыка</h3>
-    <p>Оставить нежную мелодию играть на фоне?</p>
+    <div class="mm-icon">💌</div>
+    <h3>Добро пожаловать!</h3>
+    <p>Представьтесь, пожалуйста — мы хотим обратиться к вам лично 💚</p>
+    <div id="guest-inputs">
+      <input type="text" class="guest-name-input" placeholder="Ваше имя" autocomplete="name">
+    </div>
+    <button type="button" id="add-guest-btn">＋ Добавить гостя</button>
+    <label class="mm-music-toggle"><input type="checkbox" id="mm-music-cb" checked> Оставить нежную музыку играть ♫</label>
     <div class="mm-btns">
-      <button id="mm-yes">Оставить музыку ♫</button>
-      <button id="mm-no">Без музыки</button>
+      <button id="mm-enter">Войти ✨</button>
     </div>
   </div>
 </div>
@@ -1777,6 +1794,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       Дмитрий <span class="hero-ampersand">&</span> Екатерина
     </h1>
     <div class="hero-divider"></div>
+    <p id="guest-greeting" style="display:none;"></p>
     <p class="hero-subtitle">Приглашаем вас на нашу свадьбу</p>
     <p class="hero-greeting">
       8 августа 2026 года мы скажем друг другу «Да» — и будем счастливы разделить этот день с вами
@@ -2079,9 +2097,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     <div class="pdf-invite">
       <h3 class="pdf-invite-title">Персональное приглашение</h3>
-      <p class="pdf-invite-sub">Введите ваше имя — и мы создадим именное PDF-приглашение</p>
-      <div class="pdf-invite-row">
-        <input type="text" id="pdf-name" class="pdf-name-input" placeholder="Введите ваше имя" autocomplete="name">
+      <p class="pdf-invite-sub">Ваше именное приглашение уже готово — просто скачайте его 💚</p>
+      <div class="pdf-invite-row" style="justify-content:center;">
         <button type="button" id="pdf-download" class="btn pdf-dl-btn">📄 Скачать приглашение PDF</button>
       </div>
       <div id="pdf-status" class="pdf-status"></div>
@@ -2479,8 +2496,16 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   function closeModal(){ if(musicModal){ musicModal.classList.add('hide'); setTimeout(function(){ musicModal.style.display='none'; }, 500); } }
   if(musicModal){
-    document.getElementById('mm-yes').addEventListener('click', function(){ startMusicAuto(); closeModal(); confettiBurst(); });
-    document.getElementById('mm-no').addEventListener('click', function(){ closeModal(); });
+    var guestInputs = document.getElementById('guest-inputs');
+    var addGuestBtn = document.getElementById('add-guest-btn');
+    function capN(s){ s=(s||'').trim(); return s ? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
+    function collectNames(){ var arr=[]; guestInputs.querySelectorAll('.guest-name-input').forEach(function(inp){ var v=capN(inp.value); if(v) arr.push(v); }); return arr; }
+    function fmtNames(arr){ if(!arr.length) return ''; if(arr.length===1) return arr[0]; return arr.slice(0,-1).join(', ')+' и '+arr[arr.length-1]; }
+    function applyGuests(arr){ window.guestNames = arr; try{ localStorage.setItem('weddingGuests', JSON.stringify(arr)); }catch(e){} var g=document.getElementById('guest-greeting'); if(g){ if(arr.length){ g.textContent=fmtNames(arr); g.style.display='block'; } else { g.style.display='none'; } } }
+    function addGuestRow(val){ var row=document.createElement('div'); row.className='guest-row'; var inp=document.createElement('input'); inp.type='text'; inp.className='guest-name-input'; inp.placeholder='Имя гостя'; inp.autocomplete='name'; if(val) inp.value=val; var rm=document.createElement('button'); rm.type='button'; rm.className='guest-remove'; rm.textContent='×'; rm.addEventListener('click', function(){ row.remove(); }); row.appendChild(inp); row.appendChild(rm); guestInputs.appendChild(row); return inp; }
+    if(addGuestBtn){ addGuestBtn.addEventListener('click', function(){ addGuestRow('').focus(); }); }
+    try{ var saved=JSON.parse(localStorage.getItem('weddingGuests')||'[]'); if(saved.length){ var first=guestInputs.querySelector('.guest-name-input'); if(first) first.value=saved[0]; for(var k=1;k<saved.length;k++){ addGuestRow(saved[k]); } applyGuests(saved); } }catch(e){}
+    document.getElementById('mm-enter').addEventListener('click', function(){ var arr=collectNames(); applyGuests(arr); var cb=document.getElementById('mm-music-cb'); if(cb && cb.checked){ startMusicAuto(); } closeModal(); confettiBurst(); });
   }
   /* ---- Боке-огоньки ---- */
   (function(){
@@ -2595,14 +2620,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
 
     btn.addEventListener('click', async function(){
-      var name=(nameInput.value||'').trim();
-      if(!name){ status.style.color='#9A7B3F'; status.textContent='Пожалуйста, введите ваше имя 🙏'; nameInput.focus(); return; }
+      var gn = (window.guestNames && window.guestNames.length) ? window.guestNames.slice() : [];
+      if(!gn.length){ try{ gn = JSON.parse(localStorage.getItem('weddingGuests')||'[]')||[]; }catch(e){ gn=[]; } }
+      if(!gn.length){ status.style.color='#9A7B3F'; status.textContent='Имя не указано. Обновите страницу и представьтесь 🙏'; return; }
+      var name = gn[0];
       if(typeof window.html2canvas==='undefined' || !window.jspdf){
         status.style.color='#b5524a'; status.textContent='Нет соединения для генерации PDF. Проверьте интернет.'; return;
       }
       status.style.color='#9A7B3F'; status.textContent='Готовим ваше приглашение… ✨';
-      var displayName=cap(name);
-      var dear=greeting(name);
+      var displayName = gn.length>1 ? gn.slice(0,-1).map(cap).join(', ')+' и '+cap(gn[gn.length-1]) : cap(gn[0]);
+      var dear = gn.length>1 ? 'Дорогие' : greeting(gn[0]);
 
       var card=document.createElement('div'); card.id='pdf-card';
       card.innerHTML=
