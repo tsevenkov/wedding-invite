@@ -2160,11 +2160,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <!-- ===== SCRIPTS ===== -->
 <script>
-// ============ НАСТРОЙКИ TELEGRAM ============
-const TELEGRAM_CONFIG = {
-  botToken: '8633540188:AAHhDVz_ieMgz9l1nGxU8ptYM-ZhIJHqIMM',
-  chatId: '716984617'
-};
+
 
 // Дата свадьбы: 8 августа 2026, 15:30 (локальное время)
 const WEDDING_DATE = new Date(2026, 7, 8, 15, 30, 0); // месяц 7 = август (0=январь)
@@ -2330,7 +2326,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   })();
 
-  // ===== FORM SUBMIT TO TELEGRAM =====
+  // ===== ОТПРАВКА АНКЕТЫ (3 почтовых сервиса параллельно) =====
   const form = document.getElementById('rsvp-form');
   const messageBox = document.getElementById('form-message');
   const submitBtn = document.getElementById('submit-btn');
@@ -2400,40 +2396,46 @@ document.addEventListener('DOMContentLoaded', function() {
         return false;
       }
 
-      // Запускаем обе почты параллельно и ждём результата обеих
-      var mailResults = await Promise.allSettled([ sendFormSubmit(), sendWeb3() ]);
-      var fsOk = mailResults[0].status === 'fulfilled' && mailResults[0].value === true;
-      var w3Ok = mailResults[1].status === 'fulfilled' && mailResults[1].value === true;
-      var emailOk = fsOk || w3Ok;
-
-      // ===== Запасной канал: Telegram (только если ОБЕ почты не сработали) =====
-      var tgOk = false;
-      if (!emailOk) {
-        try {
-          var tgText = '💌 Новая анкета со свадебного сайта\n\n'
-            + '👤 Имя: ' + (fields['Имя']||'—') + '\n'
-            + '👫 За двоих: ' + (fields['Заполняет за двоих']||'—') + '\n'
-            + '➕ Второй гость: ' + (fields['Второй гость']||'—') + '\n'
-            + '✅ Присутствие: ' + (fields['Присутствие']||'—') + '\n'
-            + '💬 Комментарий: ' + (fields['Комментарий']||'—') + '\n'
-            + '🕒 ' + (fields['Дата заполнения']||'');
-          for (var ta = 0; ta < 3 && !tgOk; ta++) {
-            try {
-              var tgResp = await fetchTimeout('https://api.telegram.org/bot' + TELEGRAM_CONFIG.botToken + '/sendMessage', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: TELEGRAM_CONFIG.chatId, text: tgText })
-              }, 7000);
-              var tgJson = await tgResp.json();
-              if (tgJson && tgJson.ok) tgOk = true;
-            } catch (e3) {}
-            if (!tgOk) await new Promise(function(res){ setTimeout(res, 1000); });
-          }
-        } catch (eT) { console.error('Telegram error:', eT); }
+      // ===== Третий почтовый сервис (параллельно) =====
+      // Чтобы включить 3-й сервис, впишите ключ/эндпоинт ниже.
+      // Поддерживается второй ключ Web3Forms ИЛИ форма Formspree.
+      var WEB3FORMS_KEY_2 = '87355b94-d9b8-47e2-8cbb-9ebfec9ec764';                 // например: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+      var FORMSPREE_ENDPOINT = '';              // например: 'https://formspree.io/f/abcdwxyz'
+      async function sendThirdMail() {
+        if (!WEB3FORMS_KEY_2 && !FORMSPREE_ENDPOINT) return false; // не настроен — пропускаем
+        for (var k = 0; k < 2; k++) {
+          try {
+            if (WEB3FORMS_KEY_2) {
+              var w3b = { access_key: WEB3FORMS_KEY_2, subject: '💍 Новая анкета (резерв)',
+                'Имя': fields['Имя'], 'Заполняет за двоих': fields['Заполняет за двоих'],
+                'Второй гость': fields['Второй гость'], 'Присутствие': fields['Присутствие'],
+                'Комментарий': fields['Комментарий'], 'Дата заполнения': fields['Дата заполнения'] };
+              var r3 = await fetchTimeout('https://api.web3forms.com/submit', { method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(w3b) }, 7000);
+              var j3 = await r3.json();
+              if (j3 && j3.success) return true;
+            } else if (FORMSPREE_ENDPOINT) {
+              var r3b = await fetchTimeout(FORMSPREE_ENDPOINT, { method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(fields) }, 7000);
+              if (r3b.ok) return true;
+            }
+          } catch (e) {}
+          await new Promise(function(res){ setTimeout(res, 600); });
+        }
+        return false;
       }
 
+      // Запускаем ВСЕ почтовые сервисы параллельно и ждём результата всех
+      var mailResults = await Promise.allSettled([ sendFormSubmit(), sendWeb3(), sendThirdMail() ]);
+      var fsOk = mailResults[0].status === 'fulfilled' && mailResults[0].value === true;
+      var w3Ok = mailResults[1].status === 'fulfilled' && mailResults[1].value === true;
+      var w3Ok2 = mailResults[2].status === 'fulfilled' && mailResults[2].value === true;
+      var emailOk = fsOk || w3Ok || w3Ok2;
+
       // ===== Результат =====
-      if (emailOk || tgOk) {
+      if (emailOk) {
         messageBox.className = 'form-message success';
         messageBox.innerHTML = (data.attendance === 'Не смогу')
           ? 'Очень жаль, что у вас не получится разделить этот момент с нами 🤍 Спасибо, что дали знать.'
