@@ -1776,6 +1776,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 .contact-note .cn-label{font-size:clamp(14px,1.8vw,16px);color:var(--text-light);font-style:italic;margin-bottom:6px;}
 .contact-note a{display:inline-block;font-size:clamp(18px,2.4vw,22px);color:var(--sage-deep);font-weight:600;text-decoration:none;letter-spacing:0.04em;border:1px solid var(--gold-light);border-radius:50px;padding:8px 22px;transition:all .3s;}
 .contact-note a:hover{background:var(--gold-light);color:#fff;}
+<style>
+.guest-row{display:flex;gap:8px;align-items:center;margin-top:8px;}
+.alcohol-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.alc-chip{cursor:pointer;border:1px solid var(--gold-light);background:#fff;color:#6a6a6a;border-radius:50px;padding:8px 16px;font-size:.92rem;transition:all .25s;font-family:inherit;}
+.alc-chip:hover{background:var(--gold-light);color:#fff;}
+.alc-chip.active{background:var(--gold-light);border-color:var(--gold-light);color:#fff;box-shadow:0 4px 12px rgba(168,191,160,.35);transform:translateY(-1px);}
+.rsvp-name-display{padding:12px 16px;border:1px dashed var(--gold-light);border-radius:12px;background:rgba(255,255,255,.55);font-weight:600;color:#5a5a5a;}
 </style>
 </head>
 <body>
@@ -1785,7 +1792,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <h3>Добро пожаловать!</h3>
     <p>Представьтесь, пожалуйста — мы хотим обратиться к вам лично 💚</p>
     <div id="guest-inputs">
-      <input type="text" class="guest-name-input" placeholder="Ваше имя" autocomplete="name">
+      <div class="guest-row">
+        <input type="text" class="guest-name-input gf-first" placeholder="Имя" autocomplete="given-name" style="flex:1;min-width:0;">
+        <input type="text" class="guest-name-input gf-last" placeholder="Фамилия" autocomplete="family-name" style="flex:1;min-width:0;">
+      </div>
     </div>
     <button type="button" id="add-guest-btn">＋ Добавить вторую половинку</button>
     <label class="mm-music-toggle"><input type="checkbox" id="mm-music-cb" checked> Оставить нежную музыку играть ♫</label>
@@ -2082,8 +2092,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     
     <form class="rsvp-form" id="rsvp-form">
       <div class="form-group">
-        <label class="form-label" for="guest-name">Ваше имя и фамилия</label>
-        <input type="text" class="form-input" id="guest-name" name="name" required placeholder="Как к вам обращаться?" autocomplete="name">
+        <label class="form-label">Гость</label>
+        <div id="rsvp-name-display" class="rsvp-name-display">Пожалуйста, представьтесь на стартовом экране ✨</div>
+        <input type="hidden" id="guest-name" name="name" value="">
+        <input type="hidden" id="guest-name2" name="name2" value="">
+        <input type="hidden" id="guest-fortwo" name="forTwo" value="Только за себя">
       </div>
       
       <div class="form-group">
@@ -2119,6 +2132,23 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         </div>
       </div>
       
+      <div class="form-group">
+        <label class="form-label">Предпочтения по алкоголю 🥂</label>
+        <div id="alcohol-chips" class="alcohol-chips">
+          <button type="button" class="alc-chip" data-val="Виски">Виски</button>
+          <button type="button" class="alc-chip" data-val="Коньяк">Коньяк</button>
+          <button type="button" class="alc-chip" data-val="Джин">Джин</button>
+          <button type="button" class="alc-chip" data-val="Ром">Ром</button>
+          <button type="button" class="alc-chip" data-val="Текила">Текила</button>
+          <button type="button" class="alc-chip" data-val="Шампанское">Шампанское</button>
+          <button type="button" class="alc-chip" data-val="Вино">Вино</button>
+          <button type="button" class="alc-chip" data-val="Пиво">Пиво</button>
+          <button type="button" class="alc-chip" data-val="Ликёр">Ликёр</button>
+          <button type="button" class="alc-chip" data-val="Не пью">Не пью 🙂</button>
+        </div>
+        <input type="text" class="form-input" id="alcohol-custom" placeholder="Свой вариант (через запятую)" style="margin-top:10px;">
+        <input type="hidden" id="alcohol-field" name="alcohol" value="">
+      </div>
       <div class="form-group">
         <label class="form-label" for="guest-comment">Пожелания или комментарии</label>
         <textarea class="form-textarea" id="guest-comment" name="comment" placeholder="Аллергии, опоздание, пожелания — всё, что хотите нам сообщить 💚" rows="3"></textarea>
@@ -2326,6 +2356,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   })();
 
+  // ===== Опросник по алкоголю =====
+  (function(){
+    var custom=document.getElementById('alcohol-custom');
+    var hidden=document.getElementById('alcohol-field');
+    function sync(){
+      var sel=[]; document.querySelectorAll('.alc-chip.active').forEach(function(c){ sel.push(c.getAttribute('data-val')); });
+      var cv=(custom && custom.value || '').trim(); if(cv) sel.push(cv);
+      if(hidden) hidden.value=sel.join(', ');
+    }
+    document.querySelectorAll('.alc-chip').forEach(function(c){ c.addEventListener('click', function(){ c.classList.toggle('active'); sync(); }); });
+    if(custom) custom.addEventListener('input', sync);
+  })();
+
   // ===== ОТПРАВКА АНКЕТЫ (3 почтовых сервиса параллельно) =====
   const form = document.getElementById('rsvp-form');
   const messageBox = document.getElementById('form-message');
@@ -2355,6 +2398,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'Второй гость': data.name2 || '—',
         'Присутствие': data.attendance || '—',
         'Комментарий': data.comment || '—',
+        'Алкоголь': data.alcohol || '—',
         'Дата заполнения': new Date().toLocaleString('ru-RU')
       };
 
@@ -2384,7 +2428,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       // Web3Forms
       async function sendWeb3() {
-        var w3fields = { access_key: '4351a294-2251-4b60-8d77-a9fc267fec59', subject: '💍 Новая анкета (резервная почта)', 'Имя': fields['Имя'], 'Заполняет за двоих': fields['Заполняет за двоих'], 'Второй гость': fields['Второй гость'], 'Присутствие': fields['Присутствие'], 'Комментарий': fields['Комментарий'], 'Дата заполнения': fields['Дата заполнения'] };
+        var w3fields = { access_key: '4351a294-2251-4b60-8d77-a9fc267fec59', subject: '💍 Новая анкета (резервная почта)', 'Алкоголь': fields['Алкоголь'], 'Имя': fields['Имя'], 'Заполняет за двоих': fields['Заполняет за двоих'], 'Второй гость': fields['Второй гость'], 'Присутствие': fields['Присутствие'], 'Комментарий': fields['Комментарий'], 'Дата заполнения': fields['Дата заполнения'] };
         for (var w = 0; w < 2; w++) {
           try {
             var wresp = await fetchTimeout('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(w3fields) }, 7000);
@@ -2407,7 +2451,7 @@ document.addEventListener('DOMContentLoaded', function() {
           try {
             if (WEB3FORMS_KEY_2) {
               var w3b = { access_key: WEB3FORMS_KEY_2, subject: '💍 Новая анкета (резерв)',
-                'Имя': fields['Имя'], 'Заполняет за двоих': fields['Заполняет за двоих'],
+                'Алкоголь': fields['Алкоголь'], 'Имя': fields['Имя'], 'Заполняет за двоих': fields['Заполняет за двоих'],
                 'Второй гость': fields['Второй гость'], 'Присутствие': fields['Присутствие'],
                 'Комментарий': fields['Комментарий'], 'Дата заполнения': fields['Дата заполнения'] };
               var r3 = await fetchTimeout('https://api.web3forms.com/submit', { method: 'POST',
@@ -2626,13 +2670,42 @@ document.addEventListener('DOMContentLoaded', function() {
     var guestInputs = document.getElementById('guest-inputs');
     var addGuestBtn = document.getElementById('add-guest-btn');
     function capN(s){ s=(s||'').trim(); return s ? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
-    function collectNames(){ var arr=[]; guestInputs.querySelectorAll('.guest-name-input').forEach(function(inp){ var v=capN(inp.value); if(v) arr.push(v); }); return arr; }
-    function fmtNames(arr){ if(!arr.length) return ''; if(arr.length===1) return arr[0]; return arr.slice(0,-1).join(', ')+' и '+arr[arr.length-1]; }
-    function applyGuests(arr){ window.guestNames = arr; try{ localStorage.setItem('weddingGuests', JSON.stringify(arr)); }catch(e){} var g=document.getElementById('guest-greeting'); if(g){ if(arr.length){ g.innerHTML='<span class="gn-orn">\u2766</span> '+fmtNames(arr)+' <span class="gn-orn">\u2766</span>'; g.style.display='block'; } else { g.style.display='none'; } } }
-    function addGuestRow(val){ var row=document.createElement('div'); row.className='guest-row'; var inp=document.createElement('input'); inp.type='text'; inp.className='guest-name-input'; inp.placeholder='Имя гостя'; inp.autocomplete='name'; if(val) inp.value=val; var rm=document.createElement('button'); rm.type='button'; rm.className='guest-remove'; rm.textContent='×'; rm.addEventListener('click', function(){ row.remove(); }); row.appendChild(inp); row.appendChild(rm); guestInputs.appendChild(row); return inp; }
-    if(addGuestBtn){ addGuestBtn.addEventListener('click', function(){ addGuestRow('').focus(); }); }
-    try{ var saved=JSON.parse(localStorage.getItem('weddingGuests')||'[]'); if(saved.length){ var first=guestInputs.querySelector('.guest-name-input'); if(first) first.value=saved[0]; for(var k=1;k<saved.length;k++){ addGuestRow(saved[k]); } applyGuests(saved); } }catch(e){}
-    document.getElementById('mm-enter').addEventListener('click', function(){ var arr=collectNames(); applyGuests(arr); var cb=document.getElementById('mm-music-cb'); if(cb && cb.checked){ startMusicAuto(); } closeModal(); confettiBurst(); });
+    function collectGuests(){ var arr=[]; guestInputs.querySelectorAll('.guest-row').forEach(function(row){ var f=capN((row.querySelector('.gf-first')||{}).value); var l=capN((row.querySelector('.gf-last')||{}).value); if(f||l) arr.push({first:f,last:l}); }); return arr; }
+    function firstNames(arr){ return arr.map(function(g){return g.first;}).filter(Boolean); }
+    function fullNames(arr){ return arr.map(function(g){return (g.first+' '+g.last).trim();}).filter(Boolean); }
+    function fmtNames(a){ if(!a.length) return ''; if(a.length===1) return a[0]; return a.slice(0,-1).join(', ')+' и '+a[a.length-1]; }
+    function setVal(id,v){ var el=document.getElementById(id); if(el) el.value=v; }
+    function applyGuests(arr){
+      window.guestList=arr;
+      var fn=firstNames(arr), full=fullNames(arr);
+      window.guestNames=fn; window.guestFullNames=full;
+      try{ localStorage.setItem('weddingGuestsV2', JSON.stringify(arr)); localStorage.setItem('weddingGuests', JSON.stringify(fn)); }catch(e){}
+      var g=document.getElementById('guest-greeting');
+      if(g){ if(fn.length){ g.innerHTML='<span class="gn-orn">❦</span> '+fmtNames(fn)+' <span class="gn-orn">❦</span>'; g.style.display='block'; } else { g.style.display='none'; } }
+      var nd=document.getElementById('rsvp-name-display');
+      if(full.length){ setVal('guest-name', full[0]); setVal('guest-name2', full[1]||''); setVal('guest-fortwo', full.length>=2?'Да, за двоих':'Только за себя'); if(nd) nd.textContent=fmtNames(full); }
+      else { setVal('guest-name',''); setVal('guest-name2',''); if(nd) nd.textContent='Пожалуйста, представьтесь на стартовом экране ✨'; }
+    }
+    function addGuestRow(first,last){
+      var row=document.createElement('div'); row.className='guest-row';
+      var i1=document.createElement('input'); i1.type='text'; i1.className='guest-name-input gf-first'; i1.placeholder='Имя'; i1.autocomplete='given-name'; i1.style.flex='1'; i1.style.minWidth='0'; if(first) i1.value=first;
+      var i2=document.createElement('input'); i2.type='text'; i2.className='guest-name-input gf-last'; i2.placeholder='Фамилия'; i2.autocomplete='family-name'; i2.style.flex='1'; i2.style.minWidth='0'; if(last) i2.value=last;
+      var rm=document.createElement('button'); rm.type='button'; rm.className='guest-remove'; rm.textContent='×'; rm.addEventListener('click', function(){ row.remove(); });
+      row.appendChild(i1); row.appendChild(i2); row.appendChild(rm);
+      guestInputs.appendChild(row); return i1;
+    }
+    if(addGuestBtn){ addGuestBtn.addEventListener('click', function(){ addGuestRow('','').focus(); }); }
+    try{
+      var saved=JSON.parse(localStorage.getItem('weddingGuestsV2')||'null');
+      if(!saved){ var old=JSON.parse(localStorage.getItem('weddingGuests')||'[]'); saved=old.map(function(n){ var p=String(n).trim().split(/\s+/); return {first:p[0]||'', last:p.slice(1).join(' ')}; }); }
+      if(saved && saved.length){
+        var fr=guestInputs.querySelector('.guest-row');
+        if(fr){ var ff=fr.querySelector('.gf-first'), fl=fr.querySelector('.gf-last'); if(ff) ff.value=saved[0].first||''; if(fl) fl.value=saved[0].last||''; }
+        for(var k=1;k<saved.length;k++){ addGuestRow(saved[k].first||'', saved[k].last||''); }
+        applyGuests(saved);
+      }
+    }catch(e){}
+    document.getElementById('mm-enter').addEventListener('click', function(){ var arr=collectGuests(); applyGuests(arr); var cb=document.getElementById('mm-music-cb'); if(cb && cb.checked){ startMusicAuto(); } closeModal(); confettiBurst(); });
   }
   /* ---- Боке-огоньки ---- */
   (function(){
