@@ -2092,30 +2092,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     
     <form class="rsvp-form" id="rsvp-form">
       <div class="form-group">
-        <label class="form-label">Гость</label>
+        <label class="form-label" id="guest1-label">Гость</label>
         <div id="rsvp-name-display" class="rsvp-name-display">Пожалуйста, представьтесь на стартовом экране ✨</div>
         <input type="hidden" id="guest-name" name="name" value="">
+      </div>
+      <div class="form-group" id="guest2-group" style="display:none;">
+        <label class="form-label">Второй гость</label>
+        <div id="rsvp-name-display-2" class="rsvp-name-display"></div>
         <input type="hidden" id="guest-name2" name="name2" value="">
-        <input type="hidden" id="guest-fortwo" name="forTwo" value="Только за себя">
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">Заполняете сразу за двоих человек?</label>
-        <div class="radio-group">
-          <div class="radio-option">
-            <input type="radio" id="two-yes" name="forTwo" value="Да, за двоих">
-            <label for="two-yes">👫 Да, за двоих</label>
-          </div>
-          <div class="radio-option">
-            <input type="radio" id="two-no" name="forTwo" value="Только за себя" checked>
-            <label for="two-no">🙋 Только за себя</label>
-          </div>
-        </div>
-      </div>
-      
-      <div class="form-group" id="second-guest-group" style="display:none;">
-        <label class="form-label" for="guest-name-2">Имя и фамилия второго гостя</label>
-        <input type="text" class="form-input" id="guest-name-2" name="name2" placeholder="Как зовут второго гостя?" autocomplete="name">
       </div>
       
       <div class="form-group">
@@ -2339,23 +2323,6 @@ document.addEventListener('DOMContentLoaded', function() {
   
   setInterval(createFloatingLeaf, 3000);
   
-  // ===== Показ поля второго гостя =====
-  (function(){
-    var sg = document.getElementById('second-guest-group');
-    var g2el = document.getElementById('guest-name-2');
-    document.querySelectorAll('input[name="forTwo"]').forEach(function(r){
-      r.addEventListener('change', function(){
-        var yes = document.getElementById('two-yes').checked;
-        if(sg){ sg.style.display = yes ? 'block' : 'none'; }
-        if(g2el){ g2el.required = yes; if(!yes) g2el.value=''; }
-        var ly = document.getElementById('label-yes');
-        var ln = document.getElementById('label-no');
-        if(ly){ ly.textContent = yes ? '✨ С радостью придём' : '✨ С радостью приду'; }
-        if(ln){ ln.textContent = yes ? 'К сожалению, не сможем' : 'К сожалению, не смогу'; }
-      });
-    });
-  })();
-
   // ===== Опросник по алкоголю =====
   (function(){
     var custom=document.getElementById('alcohol-custom');
@@ -2393,14 +2360,17 @@ document.addEventListener('DOMContentLoaded', function() {
         '_subject': '💍 Новая анкета со свадебного сайта',
         '_template': 'table',
         '_captcha': 'false',
-        'Имя': data.name || '—',
-        'Заполняет за двоих': data.forTwo || 'Только за себя',
-        'Второй гость': data.name2 || '—',
         'Присутствие': data.attendance || '—',
         'Комментарий': data.comment || '—',
         'Алкоголь': data.alcohol || '—',
         'Дата заполнения': new Date().toLocaleString('ru-RU')
       };
+      if (data.name2 && String(data.name2).trim()) {
+        fields['Первый гость'] = data.name || '—';
+        fields['Второй гость'] = data.name2;
+      } else {
+        fields['Гость'] = data.name || '—';
+      }
 
       submitBtn.disabled = true;
       submitBtn.textContent = 'Отправка...';
@@ -2428,7 +2398,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       // Web3Forms
       async function sendWeb3() {
-        var w3fields = { access_key: '4351a294-2251-4b60-8d77-a9fc267fec59', subject: '💍 Новая анкета (резервная почта)', 'Алкоголь': fields['Алкоголь'], 'Имя': fields['Имя'], 'Заполняет за двоих': fields['Заполняет за двоих'], 'Второй гость': fields['Второй гость'], 'Присутствие': fields['Присутствие'], 'Комментарий': fields['Комментарий'], 'Дата заполнения': fields['Дата заполнения'] };
+        var w3fields = Object.assign({ access_key: '4351a294-2251-4b60-8d77-a9fc267fec59', subject: '💍 Новая анкета (резервная почта)' }, fields);
         for (var w = 0; w < 2; w++) {
           try {
             var wresp = await fetchTimeout('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(w3fields) }, 7000);
@@ -2450,10 +2420,7 @@ document.addEventListener('DOMContentLoaded', function() {
         for (var k = 0; k < 2; k++) {
           try {
             if (WEB3FORMS_KEY_2) {
-              var w3b = { access_key: WEB3FORMS_KEY_2, subject: '💍 Новая анкета (резерв)',
-                'Алкоголь': fields['Алкоголь'], 'Имя': fields['Имя'], 'Заполняет за двоих': fields['Заполняет за двоих'],
-                'Второй гость': fields['Второй гость'], 'Присутствие': fields['Присутствие'],
-                'Комментарий': fields['Комментарий'], 'Дата заполнения': fields['Дата заполнения'] };
+              var w3b = Object.assign({ access_key: WEB3FORMS_KEY_2, subject: '💍 Новая анкета (резерв)' }, fields);
               var r3 = await fetchTimeout('https://api.web3forms.com/submit', { method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify(w3b) }, 7000);
@@ -2683,8 +2650,25 @@ document.addEventListener('DOMContentLoaded', function() {
       var g=document.getElementById('guest-greeting');
       if(g){ if(fn.length){ g.innerHTML='<span class="gn-orn">❦</span> '+fmtNames(fn)+' <span class="gn-orn">❦</span>'; g.style.display='block'; } else { g.style.display='none'; } }
       var nd=document.getElementById('rsvp-name-display');
-      if(full.length){ setVal('guest-name', full[0]); setVal('guest-name2', full[1]||''); setVal('guest-fortwo', full.length>=2?'Да, за двоих':'Только за себя'); if(nd) nd.textContent=fmtNames(full); }
-      else { setVal('guest-name',''); setVal('guest-name2',''); if(nd) nd.textContent='Пожалуйста, представьтесь на стартовом экране ✨'; }
+      var nd2=document.getElementById('rsvp-name-display-2');
+      var lbl=document.getElementById('guest1-label');
+      var g2=document.getElementById('guest2-group');
+      if(full.length){
+        setVal('guest-name', full[0]); setVal('guest-name2', full[1]||'');
+        if(lbl) lbl.textContent = full.length>=2 ? 'Первый гость' : 'Гость';
+        if(nd) nd.textContent=full[0];
+        var two = full.length>=2;
+        if(two){ if(g2) g2.style.display='block'; if(nd2) nd2.textContent=full[1]; }
+        else { if(g2) g2.style.display='none'; if(nd2) nd2.textContent=''; }
+        var ly=document.getElementById('label-yes'), ln=document.getElementById('label-no');
+        if(ly) ly.textContent = two ? '✨ С радостью придём' : '✨ С радостью приду';
+        if(ln) ln.textContent = two ? 'К сожалению, не сможем' : 'К сожалению, не смогу';
+      } else {
+        setVal('guest-name',''); setVal('guest-name2','');
+        if(lbl) lbl.textContent='Гость';
+        if(nd) nd.textContent='Пожалуйста, представьтесь на стартовом экране ✨';
+        if(g2) g2.style.display='none'; if(nd2) nd2.textContent='';
+      }
     }
     function addGuestRow(first,last){
       var row=document.createElement('div'); row.className='guest-row';
