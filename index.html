@@ -2767,9 +2767,9 @@ document.addEventListener('DOMContentLoaded', function() {
         '</div>';
       document.body.appendChild(card);
       try{
-        await (document.fonts && document.fonts.ready);
+        try{ await Promise.race([ (document.fonts && document.fonts.ready) || Promise.resolve(), new Promise(function(r){ setTimeout(r, 2500); }) ]); }catch(_f){}
         var pdfScale=(window.innerWidth<768||/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent))?1:2;
-        var canvas=await window.html2canvas(card,{scale:pdfScale,backgroundColor:'#F7F3EA',useCORS:true,logging:false,removeContainer:true});
+        var canvas=await Promise.race([ window.html2canvas(card,{scale:pdfScale,backgroundColor:'#F7F3EA',useCORS:true,logging:false,removeContainer:true,imageTimeout:8000}), new Promise(function(_r,rej){ setTimeout(function(){ rej(new Error('Не удалось отрисовать за 25с — попробуйте ещё раз')); }, 25000); }) ]);
         var img=canvas.toDataURL('image/jpeg',0.9);
         var jsPDF=window.jspdf.jsPDF;
         var pdf=new jsPDF('p','pt','a4');
