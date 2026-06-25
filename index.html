@@ -2728,7 +2728,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.body.appendChild(card);
       try{
         await (document.fonts && document.fonts.ready);
-        var canvas=await window.html2canvas(card,{scale:2,backgroundColor:'#F7F3EA',useCORS:true});
+        var canvas=await window.html2canvas(card,{scale:1.5,backgroundColor:'#F7F3EA',useCORS:true,logging:false,removeContainer:true});
         var img=canvas.toDataURL('image/png');
         var jsPDF=window.jspdf.jsPDF;
         var pdf=new jsPDF('p','pt','a4');
