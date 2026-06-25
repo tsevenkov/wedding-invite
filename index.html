@@ -2715,7 +2715,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     btn.addEventListener('click', async function(){
       var __isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      var __iosWin = __isIOS ? window.open('', '_blank') : null;
       var gn = (window.guestNames && window.guestNames.length) ? window.guestNames.slice() : [];
       if(!gn.length){ try{ gn = JSON.parse(localStorage.getItem('weddingGuests')||'[]')||[]; }catch(e){ gn=[]; } }
       if(!gn.length){ status.style.color='#9A7B3F'; status.textContent='Имя не указано. Обновите страницу и представьтесь 🙏'; return; }
@@ -2778,32 +2777,19 @@ document.addEventListener('DOMContentLoaded', function() {
         pdf.addImage(img,'JPEG',0,0,pw,ph,undefined,'FAST');
         if (__isIOS) {
           var __blob = pdf.output('blob');
-          var __fname = 'Приглашение - '+displayName+'.pdf';
-          var __shared = false;
-          try {
-            var __file = new File([__blob], __fname, { type: 'application/pdf' });
-            if (navigator.canShare && navigator.canShare({ files: [__file] })) {
-              await navigator.share({ files: [__file], title: 'Приглашение' });
-              __shared = true;
-            }
-          } catch (e) { __shared = (e && (e.name === 'AbortError')); }
-          if (__shared) {
-            if (__iosWin && !__iosWin.closed) { try { __iosWin.close(); } catch(_e){} }
-          } else {
-            var __w = (__iosWin && !__iosWin.closed) ? __iosWin : window.open('', '_blank');
-            if (__w) {
-              var __u = ((__w.URL || __w.webkitURL || URL)).createObjectURL(__blob);
-              __w.document.open();
-              __w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Приглашение</title><style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#CFCFC4;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:24px;box-sizing:border-box}.b{display:inline-block;background:#1f3a5f;color:#fff;text-decoration:none;font-size:20px;font-weight:600;padding:18px 32px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.25)}p{color:#444;font-size:15px;margin-top:22px;max-width:300px;line-height:1.5}</style></head><body><div><a class="b" href="'+__u+'">📄 Открыть приглашение</a><p>Нажмите кнопку выше, затем значок «Поделиться» (□↑) → «Сохранить в Файлы»</p></div></body></html>');
-              __w.document.close();
-            }
-          }
+          var __url = URL.createObjectURL(__blob);
+          var __ov = document.createElement('div');
+          __ov.setAttribute('style','position:fixed;inset:0;z-index:99999;background:rgba(31,58,95,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;');
+          __ov.innerHTML = '<a href="'+__url+'" style="display:inline-block;background:#fff;color:#1f3a5f;font-weight:700;font-size:21px;text-decoration:none;padding:18px 36px;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.3);">\uD83D\uDCC4 Открыть приглашение</a>' + '<p style="color:#fff;font-size:15px;margin-top:22px;max-width:300px;line-height:1.55;">Нажмите кнопку — откроется PDF. Затем значок «Поделиться» (\u25A1\u2191) внизу → «Сохранить в Файлы».</p>' + '<button id="__closeOv" style="margin-top:28px;background:transparent;border:1px solid rgba(255,255,255,.6);color:#fff;padding:10px 24px;border-radius:30px;font-size:15px;">Закрыть</button>';
+          document.body.appendChild(__ov);
+          var __cb = document.getElementById('__closeOv');
+          if (__cb) __cb.addEventListener('click', function(){ __ov.remove(); });
         } else {
           pdf.save('Приглашение - '+displayName+'.pdf');
         }
         status.style.color='#7E957D'; status.textContent = __isIOS ? 'Готово! Открываем PDF — нажми «Поделиться» → «Сохранить в Файлы» 💌' : 'Готово! Приглашение для «'+displayName+'» скачано 💌';
       }catch(err){
-        status.style.color='#b5524a'; status.textContent='Не удалось создать PDF: '+err.message; if(typeof __iosWin!=='undefined' && __iosWin && !__iosWin.closed){ try{ __iosWin.document.open(); __iosWin.document.write('<div style="padding:24px;font-family:-apple-system,sans-serif;font-size:16px;line-height:1.5;color:#900;white-space:pre-wrap"><b>Ошибка генерации PDF:</b>\n\n'+(err && (err.stack||err.message||String(err)))+'</div>'); __iosWin.document.close(); }catch(e2){} }
+        status.style.color='#b5524a'; status.textContent='Не удалось создать PDF: '+(err && (err.message||err));
       }finally{
         card.remove();
       }
