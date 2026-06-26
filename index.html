@@ -2489,22 +2489,24 @@ document.addEventListener('DOMContentLoaded', function() {
       var WEB3FORMS_KEY_2 = '87355b94-d9b8-47e2-8cbb-9ebfec9ec764';                 // например: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
       var FORMSPREE_ENDPOINT = '';              // например: 'https://formspree.io/f/abcdwxyz'
       async function sendThirdMail() {
-        if (!WEB3FORMS_KEY_2 && !FORMSPREE_ENDPOINT) return false; // не настроен — пропускаем
+        var NTFY_TOPIC = 'wedding-rsvp-tsevenkov-7h3k9'; // третий канал: push-уведомления ntfy.sh
+        if (!NTFY_TOPIC) return false;
+        // Собираем читаемое сообщение из полей анкеты
+        var __lines = [];
+        for (var __key in fields) {
+          if (!Object.prototype.hasOwnProperty.call(fields, __key)) continue;
+          if (__key.charAt(0) === '_') continue; // служебные поля FormSubmit
+          var __val = fields[__key];
+          if (__val === undefined || __val === null || __val === '') continue;
+          __lines.push(__key + ': ' + __val);
+        }
+        var __body = __lines.join('\n') || 'Новая анкета';
         for (var k = 0; k < 2; k++) {
           try {
-            if (WEB3FORMS_KEY_2) {
-              var w3b = Object.assign({ access_key: WEB3FORMS_KEY_2, subject: '💍 Новая анкета (резерв)' }, fields);
-              var r3 = await fetchTimeout('https://api.web3forms.com/submit', { method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(w3b) }, 7000);
-              var j3 = await r3.json();
-              if (j3 && j3.success) return true;
-            } else if (FORMSPREE_ENDPOINT) {
-              var r3b = await fetchTimeout(FORMSPREE_ENDPOINT, { method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(fields) }, 7000);
-              if (r3b.ok) return true;
-            }
+            var rN = await fetchTimeout('https://ntfy.sh/', { method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ topic: NTFY_TOPIC, title: '💍 Новая анкета со свадебного сайта', message: __body, tags: ['tada','ring','heart'], priority: 4 }) }, 7000);
+            if (rN.ok) return true;
           } catch (e) {}
           await new Promise(function(res){ setTimeout(res, 600); });
         }
