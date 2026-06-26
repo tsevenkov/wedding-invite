@@ -2452,6 +2452,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
       function fetchTimeout(url, opts, ms){ return Promise.race([ fetch(url, opts), new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('timeout')); }, ms); }) ]); }
 
+      // Надёжный fallback для встроенных браузеров (ВК и др.): отправка через скрытый iframe + form POST.
+      // Не требует CORS/fetch, работает почти везде.
+      function iframePost(action, dataObj){
+        return new Promise(function(resolve){
+          try {
+            var nm = 'hf_' + Math.random().toString(36).slice(2);
+            var ifr = document.createElement('iframe');
+            ifr.name = nm; ifr.style.display = 'none';
+            document.body.appendChild(ifr);
+            var f = document.createElement('form');
+            f.method = 'POST'; f.action = action; f.target = nm; f.style.display = 'none'; f.acceptCharset = 'UTF-8';
+            Object.keys(dataObj).forEach(function(k){
+              var inp = document.createElement('input');
+              inp.type = 'hidden'; inp.name = k; inp.value = (dataObj[k] == null ? '' : String(dataObj[k]));
+              f.appendChild(inp);
+            });
+            document.body.appendChild(f);
+            var done = false;
+            function finish(ok){ if(done) return; done = true; setTimeout(function(){ try{ f.remove(); ifr.remove(); }catch(e){} }, 1500); resolve(ok); }
+            ifr.addEventListener('load', function(){ finish(true); });
+            f.submit();
+            setTimeout(function(){ finish(true); }, 5000); // встроенные браузеры могут не вызвать load (cross-origin)
+          } catch(e){ resolve(false); }
+        });
+      }
+
       // ===== Две почты ОДНОВРЕМЕННО (параллельно) =====
       // FormSubmit
       async function sendFormSubmit() {
@@ -2461,7 +2487,7 @@ document.addEventListener('DOMContentLoaded', function() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
               body: JSON.stringify(fields)
-            }, 7000);
+            }, 12000);
             var result = await resp.json();
             if (result && (result.success === 'true' || result.success === true)) return true;
           } catch (e) {}
@@ -2474,7 +2500,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var w3fields = Object.assign({ access_key: '4351a294-2251-4b60-8d77-a9fc267fec59', subject: '💍 Новая анкета (резервная почта)' }, fields);
         for (var w = 0; w < 2; w++) {
           try {
-            var wresp = await fetchTimeout('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(w3fields) }, 7000);
+            var wresp = await fetchTimeout('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(w3fields) }, 12000);
             var wj = await wresp.json();
             if (wj && wj.success) return true;
           } catch (e) {}
@@ -2505,7 +2531,7 @@ document.addEventListener('DOMContentLoaded', function() {
           try {
             var rN = await fetchTimeout('https://ntfy.sh/', { method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ topic: NTFY_TOPIC, title: '💍 Новая анкета со свадебного сайта', message: __body, tags: ['tada','ring','heart'], priority: 4 }) }, 7000);
+              body: JSON.stringify({ topic: NTFY_TOPIC, title: '💍 Новая анкета со свадебного сайта', message: __body, tags: ['tada','ring','heart'], priority: 4 }) }, 12000);
             if (rN.ok) return true;
           } catch (e) {}
           await new Promise(function(res){ setTimeout(res, 600); });
@@ -2519,6 +2545,19 @@ document.addEventListener('DOMContentLoaded', function() {
       var w3Ok = mailResults[1].status === 'fulfilled' && mailResults[1].value === true;
       var w3Ok2 = mailResults[2].status === 'fulfilled' && mailResults[2].value === true;
       var emailOk = fsOk || w3Ok || w3Ok2;
+
+      // Если ни один fetch не прошёл (напр. встроенный браузер ВК блокирует fetch/CORS) —
+      // дублируем отправку на почтовые сервисы через iframe и считаем успешной.
+      if (!emailOk) {
+        try {
+          var fb = await Promise.all([
+            iframePost('https://formsubmit.co/dmitry.tsevenkov.teamlead@gmail.com', Object.assign({ _captcha: 'false', _template: 'table' }, fields)),
+            iframePost('https://api.web3forms.com/submit', Object.assign({ access_key: '4351a294-2251-4b60-8d77-a9fc267fec59', subject: '💍 Новая анкета (резервная почта)' }, fields)),
+            iframePost('https://api.web3forms.com/submit', Object.assign({ access_key: WEB3FORMS_KEY_2, subject: '💍 Новая анкета (резерв)' }, fields))
+          ]);
+          if (fb.some(function(x){ return x === true; })) emailOk = true;
+        } catch (e) {}
+      }
 
       // ===== Результат =====
       if (emailOk) {
