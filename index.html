@@ -281,21 +281,22 @@ section {
   margin: 40px auto;
   max-width: 500px;
   position: relative;
-  padding: 20px 0;
+  padding: 30px 28px;
 }
 
 .invitation-quote::before,
 .invitation-quote::after {
   content: '"';
   font-family: 'Cormorant Garamond', serif;
-  font-size: 60px;
+  font-size: clamp(38px, 10vw, 60px);
   color: var(--gold-light);
   position: absolute;
   line-height: 1;
+  pointer-events: none;
 }
 
-.invitation-quote::before { top: -10px; left: -20px; }
-.invitation-quote::after { bottom: -40px; right: -20px; content: '"'; }
+.invitation-quote::before { top: 0; left: 0; }
+.invitation-quote::after { bottom: -8px; right: 0; content: '"'; }
 
 /* ===== COUNTDOWN ===== */
 .countdown {
@@ -406,6 +407,40 @@ section {
   bottom: -18px;
   font-size: 10px;
   color: var(--gold);
+}
+
+.calendar-day.highlight.celebrate {
+  animation: cal-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes cal-pop {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.28) rotate(-4deg); box-shadow: 0 8px 26px rgba(122, 148, 115, 0.6); }
+  60%  { transform: scale(0.94) rotate(2deg); }
+  100% { transform: scale(1); }
+}
+
+.cal-heart {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font-size: 14px;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transform: translate(-50%, -50%);
+  animation: cal-heart-fly 0.85s ease-out forwards;
+  z-index: 5;
+}
+
+@keyframes cal-heart-fly {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  20%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--hx)), calc(-50% + var(--hy))) scale(1.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calendar-day.highlight.celebrate { animation: none; }
+  .cal-heart { display: none; }
 }
 
 .calendar-date-big {
@@ -1866,12 +1901,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <p class="section-subtitle">С радостью приглашаем вас</p>
     
     <div class="invitation-text">
-      <p>В нашей жизни наступает прекрасный момент — мы решили соединить свои сердца и судьбы.</p>
+      <p>В нашей жизни наступает самый трепетный и долгожданный момент — мы решили соединить свои сердца, мечты и судьбы в одну.</p>
       <div class="invitation-quote">
-        Любовь — это не смотреть друг на друга, а смотреть вместе в одном направлении
+        Любовь — это не смотреть друг на друга, а вместе смотреть в одном направлении
       </div>
-      <p>Будем рады видеть вас среди самых близких и дорогих нам людей в день нашей свадьбы.</p>
-      <p>Ваше присутствие — лучший подарок для нас!</p>
+      <p>В этот особенный день нам хочется, чтобы рядом были самые близкие и дорогие сердцу люди — те, кто согревает нас своим теплом и искренней улыбкой.</p>
+      <p>Будем счастливы разделить с вами нашу радость, ведь ваше присутствие — самый дорогой подарок для нас!</p>
     </div>
   </div>
 </section>
@@ -2273,6 +2308,34 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (d === WEDDING_DAY) {
         el.classList.add('highlight');
+        el.style.cursor = 'pointer';
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('role', 'button');
+        el.setAttribute('aria-label', 'День свадьбы');
+        const triggerCelebrate = () => {
+          el.classList.remove('celebrate');
+          void el.offsetWidth; // restart animation
+          el.classList.add('celebrate');
+          // лёгкий бурст сердечек
+          const hearts = ['💚', '🤍', '✨', '💍', '❀'];
+          const n = 6;
+          for (let k = 0; k < n; k++) {
+            const h = document.createElement('span');
+            h.className = 'cal-heart';
+            h.textContent = hearts[k % hearts.length];
+            const angle = (Math.PI * (k / (n - 1))) - Math.PI; // полукруг вверх
+            const dist = 34 + Math.random() * 14;
+            h.style.setProperty('--hx', (Math.cos(angle) * dist).toFixed(1) + 'px');
+            h.style.setProperty('--hy', (Math.sin(angle) * dist - 10).toFixed(1) + 'px');
+            h.style.animationDelay = (k * 25) + 'ms';
+            el.appendChild(h);
+            setTimeout(() => h.remove(), 1000);
+          }
+        };
+        el.addEventListener('click', triggerCelebrate);
+        el.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); triggerCelebrate(); }
+        });
       }
       
       // Выходные — нежно-зелёным
