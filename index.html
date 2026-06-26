@@ -2725,6 +2725,8 @@ document.addEventListener('DOMContentLoaded', function() {
       try{ localStorage.setItem('weddingGuestsV2', JSON.stringify(arr)); localStorage.setItem('weddingGuests', JSON.stringify(fn)); }catch(e){}
       var g=document.getElementById('guest-greeting');
       if(g){ if(fn.length){ g.innerHTML='<span class="gn-orn">❦</span> '+fmtNames(fn)+' <span class="gn-orn">❦</span>'; g.style.display='block'; } else { g.style.display='none'; } }
+      var __sub=document.querySelector('.hero-subtitle');
+      if(__sub){ __sub.textContent=(fn.length===1)?'Приглашаем тебя на нашу свадьбу':'Приглашаем вас на нашу свадьбу'; }
       var cont=document.getElementById('rsvp-guests');
       var gj=document.getElementById('guests-json');
       if(gj) gj.value=JSON.stringify(full);
